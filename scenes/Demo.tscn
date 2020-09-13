@@ -47,3 +47,4 @@ omni_range = 3.26461
 environment = SubResource( 2 )
 
 [node name="Player" parent="." instance=ExtResource( 1 )]
+footstep_sounds_folder = "sfx/footsteps/"

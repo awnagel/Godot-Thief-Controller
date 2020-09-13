@@ -17,6 +17,7 @@ export var speed : float = 1.0
 export var mouse_sens : float = 0.5
 export var lock_mouse : bool = true
 export var head_bob_enabled : bool = true
+export var footstep_sounds_folder : String = ""
 
 var light_level : float = 0.0
 
@@ -36,12 +37,18 @@ func _ready() -> void:
 	collision_normal_height = collider.shape.height
 	collision_normal_offset = collider.global_transform.origin.y
 	
-	load_footstep_sounds("res://sfx/footsteps")
+	load_footstep_sounds(footstep_sounds_folder)
 	
 	if lock_mouse:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	
 func load_footstep_sounds(sound_dir) -> void:
+	if sound_dir.ends_with("/"):
+		sound_dir.erase(sound_dir.length() - 1, 1)
+		
+	if not "res://" in sound_dir:
+		sound_dir = "res://" + sound_dir
+	
 	var snd_dir = Directory.new()
 	snd_dir.open(sound_dir)
 	snd_dir.list_dir_begin(true)
