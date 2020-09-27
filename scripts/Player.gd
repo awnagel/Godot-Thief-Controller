@@ -83,6 +83,10 @@ func _physics_process(delta) -> void:
 				state = CROUCHING
 				return
 			
+			if Input.is_action_pressed("sneak"):
+				walk(delta, 0.5)
+				return
+			
 			walk(delta)
 		
 		CROUCHING:
@@ -113,7 +117,7 @@ func head_bob(delta : float) -> void:
 		camera.global_transform.origin = global_transform.origin + Vector3.UP * bob_reset
 
 	time += delta
-	var y_bob = sin(time * (4 * PI)) * velocity.length() * 0.0015
+	var y_bob = sin(time * (4 * PI)) * velocity.length() * (speed / 1000.0)
 	camera.global_transform.origin.y += y_bob
 
 func play_footstep_audio() -> void:
