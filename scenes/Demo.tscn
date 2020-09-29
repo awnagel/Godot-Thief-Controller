@@ -20,7 +20,7 @@ ambient_light_color = Color( 0.407843, 0.4, 0.4, 1 )
 transform = Transform( 3.13844, 0, 0, 0, 0.107341, 0, 0, 0, 3.13844, 0, 0, 0 )
 
 [node name="Worldspawn2" parent="." instance=ExtResource( 2 )]
-transform = Transform( 0.110547, 0, -0.78888, 0, 1, 0, 0.141907, 0, 0.614547, -1.14935, 0.430111, -0.730448 )
+transform = Transform( 0.0511237, -0.7151, -0.638638, 0.163272, 0.415255, -0.0610518, 0.0555585, -0.562311, 0.767081, -1.14935, 0.283272, -0.730448 )
 
 [node name="Worldspawn3" parent="." instance=ExtResource( 2 )]
 transform = Transform( 0.173809, 0, -0.257689, 0, 1, 0, 0.0463541, 0, 0.966228, 1.79538, 0.430111, 1.18068 )
@@ -47,4 +47,5 @@ omni_range = 3.26461
 environment = SubResource( 2 )
 
 [node name="Player" parent="." instance=ExtResource( 1 )]
+speed = 1.0
 footstep_sounds_folder = "sfx/footsteps/"

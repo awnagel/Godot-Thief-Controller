@@ -102,7 +102,9 @@ func walk(delta, speed_mod : float = 1.0) -> void:
 	move_dir.z = (Input.get_action_strength("back") - Input.get_action_strength("forward"))
 	move_dir = move_dir.normalized()	
 	move_dir = move_dir.rotated(Vector3.UP, rotation.y)
-	velocity = move_and_slide(move_dir * speed * speed_mod)
+	
+	velocity += speed * move_dir - velocity + Vector3.DOWN * 60 * delta
+	velocity = move_and_slide((velocity * speed_mod) + get_floor_velocity(), Vector3.UP, false, 4, PI, false)
 	
 	if head_bob_enabled and state == WALKING:
 		head_bob(delta)
