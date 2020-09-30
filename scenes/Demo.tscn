@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://scenes/Player.tscn" type="PackedScene" id=1]
 [ext_resource path="res://scenes/Worldspawn.tscn" type="PackedScene" id=2]
+[ext_resource path="res://scenes/Sound_Detector.tscn" type="PackedScene" id=3]
 
 [sub_resource type="ProceduralSky" id=1]
 sky_top_color = Color( 0.0666667, 0.0666667, 0.0666667, 1 )
@@ -47,5 +48,6 @@ omni_range = 3.26461
 environment = SubResource( 2 )
 
 [node name="Player" parent="." instance=ExtResource( 1 )]
-speed = 1.0
-footstep_sounds_folder = "sfx/footsteps/"
+
+[node name="Sound_Detector" parent="." instance=ExtResource( 3 )]
+transform = Transform( 0.0960232, 0, 0, 0, 0.0960232, 0, 0, 0, 0.0960232, 0.95585, 0.394046, 2.31988 )

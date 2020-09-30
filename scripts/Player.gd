@@ -3,6 +3,8 @@ extends KinematicBody
 onready var camera = $Camera
 onready var collider = $Collider
 onready var light_indicator = $Camera/CanvasLayer/LightIndicator
+onready var surface_detector = $SurfaceDetector
+onready var sound_emitter = $SoundEmitter
 onready var audio_player = $Audio
 
 enum {
@@ -42,7 +44,17 @@ func _ready() -> void:
 	if lock_mouse:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	
+var current_sound_dir : String = ""
+	
 func load_footstep_sounds(sound_dir) -> void:
+	if sound_dir == "":
+		return
+		
+	if current_sound_dir == sound_dir:
+		return
+		
+	current_sound_dir = sound_dir
+	
 	if sound_dir.ends_with("/"):
 		sound_dir.erase(sound_dir.length() - 1, 1)
 		
@@ -59,6 +71,36 @@ func load_footstep_sounds(sound_dir) -> void:
 			footstep_sounds.append(load(sound_dir + "/" + sound))
 		sound = snd_dir.get_next()
 	
+func get_surface_texture() -> Dictionary:
+	if surface_detector.get_collider():
+		var mesh = null
+		for node in surface_detector.get_collider().get_children():
+			if node is MeshInstance:
+				if node.mesh != null:
+					mesh = node
+		
+		if !mesh:
+			return {}
+		
+		if mesh.get_surface_material(0) != null:
+				var path = mesh.get_surface_material(0).albedo_texture.resource_path.split("/")
+				var n = path[path.size() - 1].split(".")[0]
+				if TEXTURE_SOUND_LIB.has(n):
+					return TEXTURE_SOUND_LIB[n]
+					
+	return {}
+		
+func handle_player_sound_emission() -> void:
+	var result = get_surface_texture()
+	
+	if result.size() == 0:
+		return
+	
+	sound_emitter.radius = result["amplifier"]
+	
+	if result.sfx_folder != "":
+		load_footstep_sounds(result.sfx_folder)
+		
 func _input(event) -> void:
 	if event is InputEventMouseMotion:
 		rotation_degrees.y -= event.relative.x * mouse_sens
@@ -72,6 +114,7 @@ func _physics_process(delta) -> void:
 	camera_pos_normal = global_transform.origin + Vector3.UP * bob_reset	
 	
 	light_indicator.value = light_level
+	sound_emitter.radius = get_surface_texture()
 	
 	match state:
 		WALKING:
@@ -106,10 +149,12 @@ func walk(delta, speed_mod : float = 1.0) -> void:
 	velocity += speed * move_dir - velocity + Vector3.DOWN * 60 * delta
 	velocity = move_and_slide((velocity * speed_mod) + get_floor_velocity(), Vector3.UP, false, 4, PI, false)
 	
+	handle_player_sound_emission()
+	
 	if head_bob_enabled and state == WALKING:
 		head_bob(delta)
 		
-	if velocity.length() != 0.0 and not audio_player.playing:
+	if velocity.length() > 0.1 and not audio_player.playing:
 		play_footstep_audio()
 
 var time = 0.0
@@ -157,3 +202,12 @@ func lean() -> void:
 	if axis == 0 and diff.length() <= 0.01:
 		state = WALKING
 		return
+
+#Replace the placeholder with the full path of the folder where the specific sound files are stored
+#Don't include res://
+const TEXTURE_SOUND_LIB = {
+	"checkerboard" : {
+		"amplifier" : 5.0,
+		"sfx_folder" : "sfx/footsteps/"
+	}
+}
