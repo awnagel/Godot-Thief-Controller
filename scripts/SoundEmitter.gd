@@ -10,4 +10,5 @@ func _process(_delta):
 		if body.has_method("listen"):
 			body.listen(get_parent())
 	
-	$CollisionShape.shape.radius = radius
+	if $CollisionShape.shape:
+		$CollisionShape.shape.radius = radius
