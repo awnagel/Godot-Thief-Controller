@@ -205,7 +205,7 @@ func walk(delta, speed_mod : float = 1.0) -> void:
 		
 	if grounded:
 		velocity.y = -0.01
-	if grounded and Input.is_action_just_pressed("clamber"):
+	if grounded and Input.is_action_just_pressed("clamber") and state == WALKING:
 		# Check for clamber
 		if clamber():
 			return

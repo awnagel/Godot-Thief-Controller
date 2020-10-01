@@ -12,7 +12,7 @@ var last_time_since_detect : float = 0.0
 var player : Node = null
 
 func _ready() -> void:
-	player = get_tree().get_root().get_child(0).get_node("Player")
+	player = get_parent()
 
 func get_time() -> float:
 	return OS.get_ticks_msec() / 1000.0
