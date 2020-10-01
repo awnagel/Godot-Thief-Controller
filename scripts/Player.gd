@@ -21,10 +21,10 @@ export var speed : float = 1.0
 export var gravity : float = 60.0
 export var jump_force : float = 10.0
 export var drag : float = 0.2
+export(float, -45.0, -8.0, 1.0) var max_lean = -10.0
 export var mouse_sens : float = 0.5
 export var lock_mouse : bool = true
 export var head_bob_enabled : bool = true
-export var footstep_sounds_folder : String = ""
 
 var light_level : float = 0.0
 
@@ -35,7 +35,8 @@ var bob_reset : float = 0.0
 var footstep_sounds : Array = []
 
 var camera_pos_normal : Vector3 = Vector3.ZERO
-var collision_normal_height : float = 0.0
+var collider_normal_radius : float = 0.0
+var collider_normal_height : float = 0.0
 var collision_normal_offset : float = 0.0
 
 #Replace the placeholder with the full path of the folder where the specific sound files are stored
@@ -50,10 +51,9 @@ const TEXTURE_SOUND_LIB = {
 func _ready() -> void:
 	bob_reset = camera.global_transform.origin.y
 	
-	collision_normal_height = collider.shape.height
+	collider_normal_radius = collider.shape.radius
+	collider_normal_height = collider.shape.height
 	collision_normal_offset = collider.global_transform.origin.y
-	
-	load_footstep_sounds(footstep_sounds_folder)
 	
 	if lock_mouse:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -182,8 +182,6 @@ func _physics_process(delta) -> void:
 				state = CROUCHING
 				return
 			
-var snap_vec = Vector3.DOWN
-			
 #Needs some refining
 func walk(delta, speed_mod : float = 1.0) -> void:
 	var move_dir = Vector3()
@@ -196,7 +194,7 @@ func walk(delta, speed_mod : float = 1.0) -> void:
 	
 	velocity += speed * move_dir - velocity * Vector3(drag, 0, drag) + Vector3.DOWN * gravity * delta
 	
-	velocity = move_and_slide_with_snap((velocity * speed_mod) + get_floor_velocity(), snap_vec, Vector3.UP, true, 4, PI, false)
+	velocity = move_and_slide((velocity * speed_mod) + get_floor_velocity(), Vector3.UP, true, 4, PI, false)
 	
 	var grounded = is_on_floor()
 	
@@ -212,11 +210,8 @@ func walk(delta, speed_mod : float = 1.0) -> void:
 			
 		# If no clamber, jump
 		velocity.y = jump_force
-		snap_vec = Vector3.ZERO
 		return
-	else:
-		snap_vec = Vector3.DOWN
-	
+		
 	handle_player_sound_emission()
 	
 	if head_bob_enabled and grounded and state == WALKING:
@@ -245,8 +240,12 @@ func play_footstep_audio() -> void:
 	
 func crouch() -> void:
 	var from = collider.shape.height
-	var to = collision_normal_height * 0.1
+	var to = collider_normal_height * 0.5
 	collider.shape.height = lerp(from, to, 0.1)
+	from = collider.shape.radius
+	to = collider_normal_radius * 0.5
+	collider.shape.radius = lerp(from, to, 0.1)
+	collider.rotation_degrees.x = 0
 	
 	from = camera.global_transform.origin
 	to = camera_pos_normal + (Vector3.DOWN * bob_reset * 0.4)
@@ -258,7 +257,9 @@ func crouch() -> void:
 		if !space.intersect_ray(pos, pos + Vector3.UP * bob_reset + Vector3.UP * 0.2, [self]):
 			state = WALKING
 			camera.global_transform.origin = pos + Vector3.UP * bob_reset
-			collider.shape.height = collision_normal_height
+			collider.shape.height = collider_normal_height
+			collider.shape.radius = collider_normal_radius
+			collider.rotation_degrees.x = 90
 			return
 		
 func lean() -> void:
@@ -269,7 +270,7 @@ func lean() -> void:
 	camera.global_transform.origin = lerp(from, to, 0.1)
 	
 	from = camera.rotation_degrees.z
-	to = -10.0 * axis
+	to = max_lean * axis
 	camera.rotation_degrees.z = lerp(from, to, 0.1)
 	
 	var diff = camera.global_transform.origin - camera_pos_normal
@@ -306,15 +307,16 @@ func wall_clamber() -> bool:
 						if ground_check.collider == r.collider:
 							return false
 				
-						if check_clamber_box(r.position) != Vector3.ZERO:
-							continue
+						var offset = check_clamber_box(r.position)
+						if offset == -Vector3.ONE:
+							return false
 				
 						if r.position.y < pos.y:
 							return false
 				
 						#Start clamber animation
 						velocity = Vector3.ZERO
-						clamber_destination = r.position
+						clamber_destination = r.position + offset
 						state = CLAMBERING_RISE
 						return true		
 				
@@ -335,32 +337,59 @@ func vent_clamber() -> bool:
 				if ground_check and ground_check.collider == r.collider:
 					return false
 				
-				if check_clamber_box(r.position) != Vector3.ZERO:
+				var offset = check_clamber_box(r.position)
+				if offset == -Vector3.ONE:
 					return false
 				
 				if r.position.y < pos.y:
 					return false
 				
 				velocity = Vector3.ZERO
-				clamber_destination = r.position
+				clamber_destination = r.position + offset
 				state = CLAMBERING_RISE
 				return true
 		
 	return false
 	
-#TODO: Add debug bounding box drawing feature
-#TODO: Add simple nudging.
+#Nudging may need some refining
 func check_clamber_box(pos : Vector3) -> Vector3:
+	var state = get_world().direct_space_state
 	var shape = BoxShape.new()
-	shape.extents = Vector3.ONE * 0.25
+	shape.extents = Vector3.ONE * 0.15
 	
-	var query = PhysicsShapeQueryParameters.new()
-	query.set_shape(shape)
-	query.transform = Transform(global_transform.basis, pos + Vector3.UP * 0.275)
+	var params = PhysicsShapeQueryParameters.new()
+	params.set_shape(shape)
+	params.transform.origin = pos + Vector3.UP * 0.15
+	var result = state.intersect_shape(params)
 	
-	var result = get_world().direct_space_state.get_rest_info(query)
+	for i in range(result.size()):
+		if result[i].collider == self:
+			result.remove(i)	
 	
-	if result.size() > 0:
-		return Vector3.ONE	
+	if result.size() == 1 and result[0].collider.global_transform.origin.y < pos.y:
+		return Vector3.ZERO
 	
-	return Vector3.ZERO
+	if result.size() == 0:
+		return Vector3.ZERO
+		
+	var offset = Vector3.ZERO
+	var checkPos = Vector3.ZERO
+	
+	var dir = -camera.global_transform.basis.z.normalized()
+	dir.y = 0
+		
+	for i in range(4):
+		var j = (i + 1) * 0.4
+		checkPos = pos + Vector3.UP * 0.175 + dir * j
+		params.transform.origin = checkPos
+		var r = state.intersect_shape(params)
+		if r.size() == 0:
+			offset = dir * j
+			break
+	
+	if checkPos != Vector3.ZERO:
+		if state.intersect_ray(checkPos, checkPos + Vector3.DOWN * 2):
+			return offset
+	
+	return -Vector3.ONE
+	
