@@ -4,20 +4,20 @@
 [ext_resource path="res://scenes/Worldspawn.tscn" type="PackedScene" id=2]
 [ext_resource path="res://checkerboard.png" type="Texture" id=3]
 
-[sub_resource type="ProceduralSky" id=3]
+[sub_resource type="ProceduralSky" id=1]
 sky_energy = 0.5
 
 [sub_resource type="Environment" id=2]
 background_mode = 2
-background_sky = SubResource( 3 )
+background_sky = SubResource( 1 )
 ambient_light_color = Color( 0.694118, 0.658824, 0.658824, 1 )
 
-[sub_resource type="CubeMesh" id=4]
+[sub_resource type="CubeMesh" id=3]
 
-[sub_resource type="SpatialMaterial" id=5]
+[sub_resource type="SpatialMaterial" id=4]
 albedo_texture = ExtResource( 3 )
 
-[sub_resource type="BoxShape" id=6]
+[sub_resource type="BoxShape" id=5]
 
 [node name="Demo" type="Spatial"]
 
@@ -102,33 +102,33 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.916218, 0.39869, 0 )
 
 [node name="MeshInstance" type="MeshInstance" parent="RigidBody"]
 transform = Transform( 0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0 )
-mesh = SubResource( 4 )
-material/0 = SubResource( 5 )
+mesh = SubResource( 3 )
+material/0 = SubResource( 4 )
 
 [node name="CollisionShape" type="CollisionShape" parent="RigidBody"]
 transform = Transform( 0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0 )
-shape = SubResource( 6 )
+shape = SubResource( 5 )
 
 [node name="RigidBody2" type="RigidBody" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.916218, 0.39869, 0.508952 )
 
 [node name="MeshInstance" type="MeshInstance" parent="RigidBody2"]
 transform = Transform( 0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0 )
-mesh = SubResource( 4 )
-material/0 = SubResource( 5 )
+mesh = SubResource( 3 )
+material/0 = SubResource( 4 )
 
 [node name="CollisionShape" type="CollisionShape" parent="RigidBody2"]
 transform = Transform( 0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0 )
-shape = SubResource( 6 )
+shape = SubResource( 5 )
 
 [node name="RigidBody3" type="RigidBody" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.31053, 0.39869, 0.215874 )
 
 [node name="MeshInstance" type="MeshInstance" parent="RigidBody3"]
 transform = Transform( 0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0 )
-mesh = SubResource( 4 )
-material/0 = SubResource( 5 )
+mesh = SubResource( 3 )
+material/0 = SubResource( 4 )
 
 [node name="CollisionShape" type="CollisionShape" parent="RigidBody3"]
 transform = Transform( 0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0 )
-shape = SubResource( 6 )
+shape = SubResource( 5 )

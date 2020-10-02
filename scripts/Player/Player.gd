@@ -115,7 +115,7 @@ func _physics_process(delta) -> void:
 	
 	match state:
 		WALKING:
-			process_frob()
+			process_frob_and_drag()
 			if Input.is_action_pressed("lean"):
 				state = LEANING
 				return
@@ -131,12 +131,12 @@ func _physics_process(delta) -> void:
 			walk(delta)
 		
 		CROUCHING:
-			process_frob()
+			process_frob_and_drag()
 			crouch()
 			walk(delta, 0.75)
 			
 		LEANING:
-			process_frob()
+			process_frob_and_drag()
 			lean()
 			
 		CLAMBERING_RISE:
@@ -235,17 +235,17 @@ var drag_object : RigidBody = null
 var click_timer : float = 0.0
 var throw_wait_time : float = 400	
 	
-func process_frob():
-	if Input.is_action_just_pressed("interact") and click_timer == 0.0 and drag_object != null:
+func process_frob_and_drag():
+	if Input.is_action_just_pressed("mouse_left") and click_timer == 0.0 and drag_object != null:
 		click_timer = OS.get_ticks_msec()
 		
-	if Input.is_action_pressed("interact"):
+	if Input.is_action_pressed("mouse_left"):
 		if click_timer + throw_wait_time < OS.get_ticks_msec() and click_timer != 0.0:
 			click_timer = 0.0
 			throw(camera, drag_object)
 			drag_object = null
 		
-	if Input.is_action_just_released("interact"):	
+	if Input.is_action_just_released("mouse_left"):	
 		if drag_object != null:
 			if click_timer + throw_wait_time > OS.get_ticks_msec() and click_timer != 0.0:
 				drag_object = null
@@ -257,6 +257,10 @@ func process_frob():
 				drag_object.linear_velocity = Vector3.ZERO
 			elif c.has_method("on_frob"):
 				c.on_frob()
+				
+	if Input.is_action_just_pressed("mouse_right") and drag_object != null:
+		drag_object.rotation_degrees.y += 45
+		drag_object.rotation_degrees.x = 90
 				
 	if drag_object != null:
 		drag()
