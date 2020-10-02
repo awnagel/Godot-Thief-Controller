@@ -32,8 +32,6 @@ var velocity : Vector3 = Vector3.ZERO
 
 var bob_reset : float = 0.0
 
-var footstep_sounds : Array = []
-
 var camera_pos_normal : Vector3 = Vector3.ZERO
 var collider_normal_radius : float = 0.0
 var collider_normal_height : float = 0.0
@@ -44,7 +42,7 @@ var collision_normal_offset : float = 0.0
 const TEXTURE_SOUND_LIB = {
 	"checkerboard" : {
 		"amplifier" : 5.0,
-		"sfx_folder" : "sfx/footsteps/"
+		"sfx_folder" : "sfx/footsteps"
 	}
 }
 
@@ -55,12 +53,23 @@ func _ready() -> void:
 	collider_normal_height = collider.shape.height
 	collision_normal_offset = collider.global_transform.origin.y
 	
+	load_footstep_sounds("sfx/breathe", 1)
+	load_footstep_sounds("sfx/landing", 2)
+	
 	if lock_mouse:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	
 var current_sound_dir : String = ""
 	
-func load_footstep_sounds(sound_dir) -> void:
+var footstep_sounds : Array = []
+var landing_sounds : Array = []
+var clamber_sounds : Dictionary = {
+	"in" : [],
+	"out" : []
+}
+
+#1, footsteps - 2, breathing (clambering) - 3, landing
+func load_footstep_sounds(sound_dir, type : int) -> void:
 	if sound_dir == "":
 		return
 		
@@ -82,7 +91,15 @@ func load_footstep_sounds(sound_dir) -> void:
 	var sound = snd_dir.get_next()
 	while sound != "":
 		if not sound.ends_with(".import"):
-			footstep_sounds.append(load(sound_dir + "/" + sound))
+			if type == 0:
+				footstep_sounds.append(load(sound_dir + "/" + sound))
+			elif type == 1:
+				if "in" in sound:
+					clamber_sounds["in"].append(load(sound_dir + "/" + sound))
+				elif "out" in sound:
+					clamber_sounds["out"].append(load(sound_dir + "/" + sound))
+			elif type == 2:
+				landing_sounds.append(load(sound_dir + "/" + sound))
 		sound = snd_dir.get_next()
 	
 func get_surface_texture() -> Dictionary:
@@ -113,7 +130,7 @@ func handle_player_sound_emission() -> void:
 	sound_emitter.radius = result["amplifier"]
 	
 	if result.sfx_folder != "":
-		load_footstep_sounds(result.sfx_folder)
+		load_footstep_sounds(result.sfx_folder, 0)
 		
 func _input(event) -> void:
 	if event is InputEventMouseMotion:
@@ -153,7 +170,6 @@ func _physics_process(delta) -> void:
 			lean()
 			
 		CLAMBERING_RISE:
-			#collider.disabled = true
 			var pos = global_transform.origin
 			var target = Vector3(pos.x, clamber_destination.y, pos.z)
 			global_transform.origin = lerp(pos, target, 0.1)
@@ -169,6 +185,11 @@ func _physics_process(delta) -> void:
 				return
 		
 		CLAMBERING_LEDGE:
+			if !audio_player.playing:
+				clamber_sounds["out"].shuffle()
+				audio_player.stream = clamber_sounds["out"].front()
+				audio_player.play()
+			
 			global_transform.origin = lerp(global_transform.origin, clamber_destination, 0.1)
 			crouch()
 			
@@ -181,6 +202,8 @@ func _physics_process(delta) -> void:
 				global_transform.origin = clamber_destination
 				state = CROUCHING
 				return
+		
+var jumping = false
 			
 #Needs some refining
 func walk(delta, speed_mod : float = 1.0) -> void:
@@ -203,13 +226,25 @@ func walk(delta, speed_mod : float = 1.0) -> void:
 		
 	if grounded:
 		velocity.y = -0.01
+		
+		if jumping:
+			landing_sounds.shuffle()
+			audio_player.stream = landing_sounds.front()
+			audio_player.play()
+		
+		jumping = false
 	if grounded and Input.is_action_just_pressed("clamber") and state == WALKING:
 		# Check for clamber
 		if clamber():
+			if not audio_player.stream in clamber_sounds["in"]:
+				clamber_sounds["in"].shuffle()
+				audio_player.stream = clamber_sounds["in"].front()
+				audio_player.play()
 			return
 			
 		# If no clamber, jump
 		velocity.y = jump_force
+		jumping = true
 		return
 		
 	handle_player_sound_emission()
@@ -362,7 +397,7 @@ func check_clamber_box(pos : Vector3) -> Vector3:
 	params.transform.origin = pos + Vector3.UP * 0.15
 	var result = state.intersect_shape(params)
 	
-	for i in range(result.size()):
+	for i in range(result.size() - 1):
 		if result[i].collider == self:
 			result.remove(i)	
 	
@@ -371,6 +406,15 @@ func check_clamber_box(pos : Vector3) -> Vector3:
 	
 	if result.size() == 0:
 		return Vector3.ZERO
+		
+	if !check_gap(pos + Vector3.UP * 0.175):
+		return -Vector3.ONE
+	
+	if !check_gap(pos + Vector3.UP * 0.175 + Vector3.FORWARD * 0.15):
+		return -Vector3.ONE
+
+	if !check_gap(pos + Vector3.UP * 0.175 + Vector3.BACK * 0.15):
+		return -Vector3.ONE
 		
 	var offset = Vector3.ZERO
 	var checkPos = Vector3.ZERO
@@ -393,3 +437,19 @@ func check_clamber_box(pos : Vector3) -> Vector3:
 	
 	return -Vector3.ONE
 	
+func check_gap(pos : Vector3) -> bool:
+	var space = get_world().direct_space_state
+	
+	var c = 0
+	
+	for i in range(4):
+		var r = i * 90
+		var v = Vector3.UP.rotated(Vector3.FORWARD, deg2rad(r))
+		var result = space.intersect_ray(pos, pos + v, [self])
+		if result and (result.position - pos).length() < 0.2:
+			c += 1
+			
+	if c >= 2:
+		return false
+	
+	return true
