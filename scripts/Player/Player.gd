@@ -6,6 +6,8 @@ onready var light_indicator = $Camera/CanvasLayer/LightIndicator
 onready var surface_detector = $SurfaceDetector
 onready var sound_emitter = $SoundEmitter
 onready var audio_player = $Audio
+onready var frob_raycast = $Camera/FrobCast
+var clamber = null
 
 enum {
 	WALKING,
@@ -22,9 +24,12 @@ export var gravity : float = 60.0
 export var jump_force : float = 10.0
 export var drag : float = 0.2
 export(float, -45.0, -8.0, 1.0) var max_lean = -10.0
+export var interact_distance : float = 0.75
 export var mouse_sens : float = 0.5
 export var lock_mouse : bool = true
 export var head_bob_enabled : bool = true
+
+var clamber_destination : Vector3 = Vector3.ZERO
 
 var light_level : float = 0.0
 
@@ -48,6 +53,10 @@ const TEXTURE_SOUND_LIB = {
 
 func _ready() -> void:
 	bob_reset = camera.global_transform.origin.y
+	
+	frob_raycast.cast_to * interact_distance
+	
+	clamber = clamber_manager.new(self, camera, get_world())
 	
 	collider_normal_radius = collider.shape.radius
 	collider_normal_height = collider.shape.height
@@ -106,6 +115,7 @@ func _physics_process(delta) -> void:
 	
 	match state:
 		WALKING:
+			process_frob()
 			if Input.is_action_pressed("lean"):
 				state = LEANING
 				return
@@ -121,10 +131,12 @@ func _physics_process(delta) -> void:
 			walk(delta)
 		
 		CROUCHING:
+			process_frob()
 			crouch()
 			walk(delta, 0.75)
 			
 		LEANING:
+			process_frob()
 			lean()
 			
 		CLAMBERING_RISE:
@@ -187,7 +199,7 @@ func walk(delta, speed_mod : float = 1.0) -> void:
 		jumping = false
 	if grounded and Input.is_action_just_pressed("clamber") and state == WALKING:
 		# Check for clamber
-		var c = attempt_clamber()
+		var c = clamber.attempt_clamber()
 		if c != Vector3.ZERO:
 			clamber_destination = c
 			state = CLAMBERING_RISE
@@ -218,6 +230,52 @@ func head_bob(delta : float) -> void:
 	var z_bob = sin(time * (2 * PI)) * velocity.length() * 0.2
 	camera.global_transform.origin.y += y_bob
 	camera.rotation_degrees.z = z_bob
+	
+var drag_object : RigidBody = null
+var click_timer : float = 0.0
+var throw_wait_time : float = 400	
+	
+func process_frob():
+	if Input.is_action_just_pressed("interact") and click_timer == 0.0 and drag_object != null:
+		click_timer = OS.get_ticks_msec()
+		
+	if Input.is_action_pressed("interact"):
+		if click_timer + throw_wait_time < OS.get_ticks_msec() and click_timer != 0.0:
+			click_timer = 0.0
+			throw(camera, drag_object)
+			drag_object = null
+		
+	if Input.is_action_just_released("interact"):	
+		if drag_object != null:
+			if click_timer + throw_wait_time > OS.get_ticks_msec() and click_timer != 0.0:
+				drag_object = null
+				click_timer = 0.0
+		elif frob_raycast.is_colliding():
+			var c = frob_raycast.get_collider()
+			if drag_object == null and c is RigidBody and c.scale < (Vector3.ONE * 5):
+				drag_object = c
+				drag_object.linear_velocity = Vector3.ZERO
+			elif c.has_method("on_frob"):
+				c.on_frob()
+				
+	if drag_object != null:
+		drag()
+		
+		if camera.global_transform.origin.distance_to(drag_object.global_transform.origin) > interact_distance + 0.35:
+			drag_object = null
+	
+func drag(damping : float = 0.5, s2ms : int = 15) -> void:
+	var dest = frob_raycast.global_transform.origin - frob_raycast.global_transform.basis.z.normalized() * interact_distance
+	var d1 = (dest - drag_object.global_transform.origin)
+	drag_object.angular_velocity = Vector3.ZERO
+	
+	var v1 = velocity * damping + drag_object.linear_velocity * damping
+	var v2 = (d1 * s2ms) * (1.0 - damping) / drag_object.mass
+	
+	drag_object.linear_velocity = v1 + v2
+	
+func throw(camera, drag, throw_force : float = 10.0) -> void:
+	drag.apply_central_impulse(-camera.global_transform.basis.z * throw_force)
 	
 func crouch() -> void:
 	var from = collider.shape.height
@@ -257,150 +315,4 @@ func lean() -> void:
 	var diff = camera.global_transform.origin - camera_pos_normal
 	if axis == 0 and diff.length() <= 0.01:
 		state = WALKING
-		return
-
-#TODO: Get the best distance values
-func attempt_clamber() -> Vector3:
-	if camera.rotation_degrees.x < 20.0:
-		var v = test_clamber_vent()
-		if v != Vector3.ZERO:
-			return v
-		v = test_clamber_ledge()
-		if v != Vector3.ZERO:
-			return v
-	elif camera.rotation_degrees.x > 20.0:
-		var v = test_clamber_ledge()
-		if v != Vector3.ZERO:
-			return v
-		v = test_clamber_vent()
-		if v != Vector3.ZERO:
-			return v
-	return Vector3.ZERO
-			
-var clamber_destination : Vector3 = Vector3.ZERO
-		
-func test_clamber_ledge() -> Vector3:
-	var space = get_world().direct_space_state
-	var pos = global_transform.origin
-	var d1 = pos + Vector3.UP * 1.25
-	var d2 = d1 -global_transform.basis.z.normalized()
-	var d3 = d2 + Vector3.DOWN * 16
-	
-	if not space.intersect_ray(pos, d1):
-		for i in range(5):
-			if not space.intersect_ray(d1, d2 - global_transform.basis.z.normalized() * i):
-				for j in range(5):
-					d2 = d1 + -global_transform.basis.z.normalized() * (j + 1)
-					var r = space.intersect_ray(d2, d3)
-					if r:
-						var ground_check = space.intersect_ray(pos, pos + Vector3.DOWN * 2)
-				
-						if ground_check.collider == r.collider:
-							return Vector3.ZERO
-				
-						var offset = check_clamber_box(r.position + Vector3.UP * 0.175)
-						if offset == -Vector3.ONE:
-							return Vector3.ZERO
-				
-						if r.position.y < pos.y:
-							return Vector3.ZERO
-				
-						#Start clamber animation
-						return r.position + offset
-						return Vector3.ZERO		
-				
-	return Vector3.ZERO
-	
-func test_clamber_vent() -> Vector3:
-	var space = get_world().direct_space_state
-	var pos = global_transform.origin
-	var d1 = camera.global_transform.origin - camera.global_transform.basis.z.normalized() * 0.4
-	var d2 = d1 + Vector3.DOWN * 6
-	
-	if not space.intersect_ray(pos, d1, [self]):
-		for i in range(5):
-			var r = space.intersect_ray(d1 - camera.global_transform.basis.z.normalized() * 0.4 * i, d2, [self])
-			if r:
-				var ground_check = space.intersect_ray(pos, pos + Vector3.DOWN * 2)
-			
-				if ground_check and ground_check.collider == r.collider:
-					return Vector3.ZERO
-				
-				var offset = check_clamber_box(r.position + Vector3.UP * 0.175)
-				if offset == -Vector3.ONE:
-					return Vector3.ZERO
-				
-				if r.position.y < pos.y:
-					return Vector3.ZERO
-				
-				return r.position + offset
-				
-	return Vector3.ZERO
-	
-#Nudging may need some refining
-func check_clamber_box(pos : Vector3, box_size : float = 0.15) -> Vector3:
-	var state = get_world().direct_space_state
-	var shape = BoxShape.new()
-	shape.extents = Vector3.ONE * box_size
-	
-	var params = PhysicsShapeQueryParameters.new()
-	params.set_shape(shape)
-	params.transform.origin = pos
-	var result = state.intersect_shape(params)
-	
-	for i in range(result.size() - 1):
-		if result[i].collider == self:
-			result.remove(i)	
-	
-	if result.size() == 1 and result[0].collider.global_transform.origin.y < pos.y:
-		return Vector3.ZERO
-	
-	if result.size() == 0:
-		return Vector3.ZERO
-	
-	if !check_gap(pos + Vector3.FORWARD * 0.15):
-		return -Vector3.ONE
-
-	if !check_gap(pos + Vector3.BACK * 0.15):
-		return -Vector3.ONE
-		
-	if !check_gap(pos):
-		return -Vector3.ONE
-		
-	var offset = Vector3.ZERO
-	var checkPos = Vector3.ZERO
-	
-	var dir = -camera.global_transform.basis.z.normalized()
-	dir.y = 0
-		
-	for i in range(4):
-		var j = (i + 1) * 0.4
-		checkPos = pos + dir * j
-		params.transform.origin = checkPos
-		var r = state.intersect_shape(params)
-		if r.size() == 0:
-			offset = dir * j
-			break
-	
-	if checkPos != Vector3.ZERO:
-		if state.intersect_ray(checkPos, checkPos + Vector3.DOWN * 2):
-			return offset
-	
-	return -Vector3.ONE
-	
-func check_gap(pos : Vector3) -> bool:
-	var space = get_world().direct_space_state
-	
-	var c = 0
-	
-	for i in range(4):
-		var r = i * 90
-		var v = Vector3.UP.rotated(Vector3.FORWARD, deg2rad(r))
-		var result = space.intersect_ray(pos, pos + v, [self])
-		if result and (result.position - pos).length() < 0.2:
-			c += 1
-			
-	if c >= 2:
-		return false
-	
-	return true
+		return		
