@@ -49,17 +49,17 @@ transform = Transform( -3.14226e-09, -0.107219, 0, 0.179884, -1.62921e-07, 0, 0,
 [node name="Worldspawn11" parent="." instance=ExtResource( 2 )]
 transform = Transform( -3.14226e-09, -0.107219, 0, 0.179884, -1.62921e-07, 0, 0, 0, 0.482195, -0.970431, 0.604947, -1.46484 )
 
-[node name="Worldspawn4" parent="." instance=ExtResource( 2 )]
-transform = Transform( -8.8897e-09, -0.303332, 0, 0.0545646, -4.94192e-08, 0, 0, 0, 0.303332, -1.89088, 0.968637, 1.74407 )
-
-[node name="Worldspawn5" parent="." instance=ExtResource( 2 )]
-transform = Transform( -8.8897e-09, -0.303332, 0, 0.0545646, -4.94192e-08, 0, 0, 0, 0.303332, -1.33658, 0.968637, 2.34538 )
-
-[node name="Worldspawn6" parent="." instance=ExtResource( 2 )]
-transform = Transform( -8.8897e-09, -0.303332, 0, 0.0545646, -4.94192e-08, 0, 0, 0, 0.303332, -1.32847, 0.968637, 1.18046 )
-
 [node name="Worldspawn7" parent="." instance=ExtResource( 2 )]
-transform = Transform( -8.8897e-09, -0.303332, 0, 0.0545646, -4.94192e-08, 0, 0, 0, 0.303332, -0.745026, 0.968637, 1.76379 )
+transform = Transform( -8.96064e-09, -0.4, 0, 0.055, -6.51683e-08, 0, 0, 0, 1.4, -3.31056, 0.968637, 3.19321 )
+
+[node name="Worldspawn17" parent="." instance=ExtResource( 2 )]
+transform = Transform( -8.96064e-09, -0.4, 0, 0.055, -6.51683e-08, 0, 0, 0, 0.4, -2.50804, 0.968637, 4.13493 )
+
+[node name="Worldspawn18" parent="." instance=ExtResource( 2 )]
+transform = Transform( -8.96064e-09, -0.4, 0, 0.055, -6.51683e-08, 0, 0, 0, 0.4, -2.50804, 0.968637, 2.18762 )
+
+[node name="Worldspawn16" parent="." instance=ExtResource( 2 )]
+transform = Transform( -8.96064e-09, -0.4, 0, 0.055, -6.51683e-08, 0, 0, 0, 1.4, -1.69461, 0.968637, 3.19321 )
 
 [node name="Worldspawn3" parent="." instance=ExtResource( 2 )]
 transform = Transform( 0.173809, 0, -0.257689, 0, 1, 0, 0.0463541, 0, 0.966228, 1.79538, 0.430111, 1.18068 )

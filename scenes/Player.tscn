@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://scripts/Player.gd" type="Script" id=1]
 [ext_resource path="res://scenes/LightDetector.tscn" type="PackedScene" id=2]
 [ext_resource path="res://scripts/SoundEmitter.gd" type="Script" id=3]
+[ext_resource path="res://scripts/PlayerAudio.gd" type="Script" id=4]
 
 [sub_resource type="CapsuleShape" id=1]
 
@@ -53,6 +54,7 @@ __meta__ = {
 }
 
 [node name="Audio" type="AudioStreamPlayer" parent="."]
+script = ExtResource( 4 )
 
 [node name="SoundEmitter" type="Area" parent="."]
 script = ExtResource( 3 )

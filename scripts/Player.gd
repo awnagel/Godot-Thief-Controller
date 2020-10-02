@@ -53,54 +53,12 @@ func _ready() -> void:
 	collider_normal_height = collider.shape.height
 	collision_normal_offset = collider.global_transform.origin.y
 	
-	load_footstep_sounds("sfx/breathe", 1)
-	load_footstep_sounds("sfx/landing", 2)
+	audio_player.load_footstep_sounds("sfx/breathe", 1)
+	audio_player.load_footstep_sounds("sfx/landing", 2)
 	
 	if lock_mouse:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	
-var current_sound_dir : String = ""
-	
-var footstep_sounds : Array = []
-var landing_sounds : Array = []
-var clamber_sounds : Dictionary = {
-	"in" : [],
-	"out" : []
-}
 
-#1, footsteps - 2, breathing (clambering) - 3, landing
-func load_footstep_sounds(sound_dir, type : int) -> void:
-	if sound_dir == "":
-		return
-		
-	if current_sound_dir == sound_dir:
-		return
-		
-	current_sound_dir = sound_dir
-	
-	if sound_dir.ends_with("/"):
-		sound_dir.erase(sound_dir.length() - 1, 1)
-		
-	if not "res://" in sound_dir:
-		sound_dir = "res://" + sound_dir
-	
-	var snd_dir = Directory.new()
-	snd_dir.open(sound_dir)
-	snd_dir.list_dir_begin(true)
-	
-	var sound = snd_dir.get_next()
-	while sound != "":
-		if not sound.ends_with(".import"):
-			if type == 0:
-				footstep_sounds.append(load(sound_dir + "/" + sound))
-			elif type == 1:
-				if "in" in sound:
-					clamber_sounds["in"].append(load(sound_dir + "/" + sound))
-				elif "out" in sound:
-					clamber_sounds["out"].append(load(sound_dir + "/" + sound))
-			elif type == 2:
-				landing_sounds.append(load(sound_dir + "/" + sound))
-		sound = snd_dir.get_next()
 	
 func get_surface_texture() -> Dictionary:
 	if surface_detector.get_collider():
@@ -130,7 +88,7 @@ func handle_player_sound_emission() -> void:
 	sound_emitter.radius = result["amplifier"]
 	
 	if result.sfx_folder != "":
-		load_footstep_sounds(result.sfx_folder, 0)
+		audio_player.load_footstep_sounds(result.sfx_folder, 0)
 		
 func _input(event) -> void:
 	if event is InputEventMouseMotion:
@@ -185,11 +143,7 @@ func _physics_process(delta) -> void:
 				return
 		
 		CLAMBERING_LEDGE:
-			if !audio_player.playing:
-				clamber_sounds["out"].shuffle()
-				audio_player.stream = clamber_sounds["out"].front()
-				audio_player.play()
-			
+			audio_player.play_clamber_sound(false)
 			global_transform.origin = lerp(global_transform.origin, clamber_destination, 0.1)
 			crouch()
 			
@@ -203,7 +157,7 @@ func _physics_process(delta) -> void:
 				state = CROUCHING
 				return
 		
-var jumping = false
+var jumping : bool = false
 			
 #Needs some refining
 func walk(delta, speed_mod : float = 1.0) -> void:
@@ -228,18 +182,16 @@ func walk(delta, speed_mod : float = 1.0) -> void:
 		velocity.y = -0.01
 		
 		if jumping:
-			landing_sounds.shuffle()
-			audio_player.stream = landing_sounds.front()
-			audio_player.play()
+			audio_player.play_land_sound()
 		
 		jumping = false
 	if grounded and Input.is_action_just_pressed("clamber") and state == WALKING:
 		# Check for clamber
-		if clamber():
-			if not audio_player.stream in clamber_sounds["in"]:
-				clamber_sounds["in"].shuffle()
-				audio_player.stream = clamber_sounds["in"].front()
-				audio_player.play()
+		var c = attempt_clamber()
+		if c != Vector3.ZERO:
+			clamber_destination = c
+			state = CLAMBERING_RISE
+			audio_player.play_clamber_sound(true)
 			return
 			
 		# If no clamber, jump
@@ -253,9 +205,9 @@ func walk(delta, speed_mod : float = 1.0) -> void:
 		head_bob(delta)
 		
 	if velocity.length() > 0.1 and grounded and not audio_player.playing and is_on_floor():
-		play_footstep_audio()
+		audio_player.play_footstep_sound()
 
-var time = 0.0
+var time : float = 0.0
 		
 func head_bob(delta : float) -> void:
 	if velocity.length() == 0.0:
@@ -266,12 +218,6 @@ func head_bob(delta : float) -> void:
 	var z_bob = sin(time * (2 * PI)) * velocity.length() * 0.2
 	camera.global_transform.origin.y += y_bob
 	camera.rotation_degrees.z = z_bob
-
-func play_footstep_audio() -> void:
-	if footstep_sounds.size() > 0:
-		footstep_sounds.shuffle()
-		audio_player.stream = footstep_sounds.front()
-		audio_player.play()
 	
 func crouch() -> void:
 	var from = collider.shape.height
@@ -314,16 +260,26 @@ func lean() -> void:
 		return
 
 #TODO: Get the best distance values
-func clamber() -> bool:
+func attempt_clamber() -> Vector3:
 	if camera.rotation_degrees.x < 20.0:
-		return vent_clamber() or wall_clamber()
+		var v = test_clamber_vent()
+		if v != Vector3.ZERO:
+			return v
+		v = test_clamber_ledge()
+		if v != Vector3.ZERO:
+			return v
 	elif camera.rotation_degrees.x > 20.0:
-		return wall_clamber() or vent_clamber()
-	return false
+		var v = test_clamber_ledge()
+		if v != Vector3.ZERO:
+			return v
+		v = test_clamber_vent()
+		if v != Vector3.ZERO:
+			return v
+	return Vector3.ZERO
 			
 var clamber_destination : Vector3 = Vector3.ZERO
 		
-func wall_clamber() -> bool:
+func test_clamber_ledge() -> Vector3:
 	var space = get_world().direct_space_state
 	var pos = global_transform.origin
 	var d1 = pos + Vector3.UP * 1.25
@@ -340,24 +296,22 @@ func wall_clamber() -> bool:
 						var ground_check = space.intersect_ray(pos, pos + Vector3.DOWN * 2)
 				
 						if ground_check.collider == r.collider:
-							return false
+							return Vector3.ZERO
 				
-						var offset = check_clamber_box(r.position)
+						var offset = check_clamber_box(r.position + Vector3.UP * 0.175)
 						if offset == -Vector3.ONE:
-							return false
+							return Vector3.ZERO
 				
 						if r.position.y < pos.y:
-							return false
+							return Vector3.ZERO
 				
 						#Start clamber animation
-						velocity = Vector3.ZERO
-						clamber_destination = r.position + offset
-						state = CLAMBERING_RISE
-						return true		
+						return r.position + offset
+						return Vector3.ZERO		
 				
-	return false
+	return Vector3.ZERO
 	
-func vent_clamber() -> bool:
+func test_clamber_vent() -> Vector3:
 	var space = get_world().direct_space_state
 	var pos = global_transform.origin
 	var d1 = camera.global_transform.origin - camera.global_transform.basis.z.normalized() * 0.4
@@ -370,31 +324,28 @@ func vent_clamber() -> bool:
 				var ground_check = space.intersect_ray(pos, pos + Vector3.DOWN * 2)
 			
 				if ground_check and ground_check.collider == r.collider:
-					return false
+					return Vector3.ZERO
 				
-				var offset = check_clamber_box(r.position)
+				var offset = check_clamber_box(r.position + Vector3.UP * 0.175)
 				if offset == -Vector3.ONE:
-					return false
+					return Vector3.ZERO
 				
 				if r.position.y < pos.y:
-					return false
+					return Vector3.ZERO
 				
-				velocity = Vector3.ZERO
-				clamber_destination = r.position + offset
-				state = CLAMBERING_RISE
-				return true
-		
-	return false
+				return r.position + offset
+				
+	return Vector3.ZERO
 	
 #Nudging may need some refining
-func check_clamber_box(pos : Vector3) -> Vector3:
+func check_clamber_box(pos : Vector3, box_size : float = 0.15) -> Vector3:
 	var state = get_world().direct_space_state
 	var shape = BoxShape.new()
-	shape.extents = Vector3.ONE * 0.15
+	shape.extents = Vector3.ONE * box_size
 	
 	var params = PhysicsShapeQueryParameters.new()
 	params.set_shape(shape)
-	params.transform.origin = pos + Vector3.UP * 0.15
+	params.transform.origin = pos
 	var result = state.intersect_shape(params)
 	
 	for i in range(result.size() - 1):
@@ -406,14 +357,14 @@ func check_clamber_box(pos : Vector3) -> Vector3:
 	
 	if result.size() == 0:
 		return Vector3.ZERO
-		
-	if !check_gap(pos + Vector3.UP * 0.175):
-		return -Vector3.ONE
 	
-	if !check_gap(pos + Vector3.UP * 0.175 + Vector3.FORWARD * 0.15):
+	if !check_gap(pos + Vector3.FORWARD * 0.15):
 		return -Vector3.ONE
 
-	if !check_gap(pos + Vector3.UP * 0.175 + Vector3.BACK * 0.15):
+	if !check_gap(pos + Vector3.BACK * 0.15):
+		return -Vector3.ONE
+		
+	if !check_gap(pos):
 		return -Vector3.ONE
 		
 	var offset = Vector3.ZERO
@@ -424,7 +375,7 @@ func check_clamber_box(pos : Vector3) -> Vector3:
 		
 	for i in range(4):
 		var j = (i + 1) * 0.4
-		checkPos = pos + Vector3.UP * 0.175 + dir * j
+		checkPos = pos + dir * j
 		params.transform.origin = checkPos
 		var r = state.intersect_shape(params)
 		if r.size() == 0:
