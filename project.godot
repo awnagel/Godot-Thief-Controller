@@ -10,12 +10,36 @@ config_version=4
 
 _global_script_classes=[ {
 "base": "Object",
-"class": "clamber_manager",
+"class": "ClamberManager",
 "language": "GDScript",
-"path": "res://scripts/ClamberManager.gd"
+"path": "res://scripts/Player/clamber_manager.gd"
+}, {
+"base": "Spatial",
+"class": "LightDetector",
+"language": "GDScript",
+"path": "res://scripts/Player/light_detector.gd"
+}, {
+"base": "KinematicBody",
+"class": "Player",
+"language": "GDScript",
+"path": "res://scripts/Player/player.gd"
+}, {
+"base": "AudioStreamPlayer",
+"class": "PlayerAudio",
+"language": "GDScript",
+"path": "res://scripts/Player/player_audio.gd"
+}, {
+"base": "Area",
+"class": "PlayerSoundEmitter",
+"language": "GDScript",
+"path": "res://scripts/Player/player_sound_emitter.gd"
 } ]
 _global_script_class_icons={
-"clamber_manager": ""
+"ClamberManager": "",
+"LightDetector": "",
+"Player": "",
+"PlayerAudio": "",
+"PlayerSoundEmitter": ""
 }
 
 [application]

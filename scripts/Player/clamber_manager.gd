@@ -1,85 +1,92 @@
 extends Object
+class_name ClamberManager
 
-#Having clamber as a seperate class let's any object use the clamber function, it just needs a clamber manager
-class_name clamber_manager
+# Having clamber as a seperate class let's any object use the clamber function,
+# it just needs a clamber manager.
 
-var camera : Camera = null
-var world : World = null
-var user : KinematicBody = null
+var _camera : Camera = null
+var _world : World = null
+var _user : KinematicBody = null
 
 func _init(User : KinematicBody, Current_Camera : Camera, User_World : World):
-	camera = Current_Camera
-	user = User
-	world = User_World
+	_camera = Current_Camera
+	_user = User
+	_world = User_World
 
-func get_world():
-	return world
+
+func _get_world():
+	return _world
+
 
 func attempt_clamber() -> Vector3:
-	if camera.rotation_degrees.x < 20.0:
-		var v = test_clamber_vent()
+	if _camera.rotation_degrees.x < 20.0:
+		var v = _test_clamber_vent()
 		if v != Vector3.ZERO:
 			return v
-		v = test_clamber_ledge()
+		v = _test_clamber_ledge()
 		if v != Vector3.ZERO:
 			return v
-	elif camera.rotation_degrees.x > 20.0:
-		var v = test_clamber_ledge()
+	elif _camera.rotation_degrees.x > 20.0:
+		var v = _test_clamber_ledge()
 		if v != Vector3.ZERO:
 			return v
-		v = test_clamber_vent()
+		v = _test_clamber_vent()
 		if v != Vector3.ZERO:
 			return v
 	return Vector3.ZERO
+	
 		
-func test_clamber_ledge() -> Vector3:
-	var space = get_world().direct_space_state
-	var pos = user.global_transform.origin
+func _test_clamber_ledge() -> Vector3:
+	var user_forward = -_user.global_transform.basis.z.normalized()
+	var space = _get_world().direct_space_state
+	var pos = _user.global_transform.origin
 	var d1 = pos + Vector3.UP * 1.25
-	var d2 = d1 -user.global_transform.basis.z.normalized()
+	var d2 = d1 + user_forward
 	var d3 = d2 + Vector3.DOWN * 16
 	
 	if not space.intersect_ray(pos, d1):
 		for i in range(5):
-			if not space.intersect_ray(d1, d2 - user.global_transform.basis.z.normalized() * i):
+			if not space.intersect_ray(d1, d2 + user_forward * i):
 				for j in range(5):
-					d2 = d1 + -user.global_transform.basis.z.normalized() * (j + 1)
+					d2 = d1 + user_forward * (j + 1)
 					var r = space.intersect_ray(d2, d3)
 					if r:
-						var ground_check = space.intersect_ray(pos, pos + Vector3.DOWN * 2)
+						var ground_check = space.intersect_ray(pos, 
+								pos + Vector3.DOWN * 2)
 				
 						if ground_check.collider == r.collider:
 							return Vector3.ZERO
 				
-						var offset = check_clamber_box(r.position + Vector3.UP * 0.175)
+						var offset = _check_clamber_box(r.position + Vector3.UP * 0.175)
 						if offset == -Vector3.ONE:
 							return Vector3.ZERO
 				
 						if r.position.y < pos.y:
 							return Vector3.ZERO
 				
-						#Start clamber animation
 						return r.position + offset
-						return Vector3.ZERO		
 				
 	return Vector3.ZERO
 	
-func test_clamber_vent() -> Vector3:
-	var space = get_world().direct_space_state
-	var pos = user.global_transform.origin
-	var d1 = camera.global_transform.origin - camera.global_transform.basis.z.normalized() * 0.4
+	
+func _test_clamber_vent() -> Vector3:
+	var cam_forward = -_camera.global_transform.basis.z.normalized() * 0.4
+	var space = _get_world().direct_space_state
+	var pos = _user.global_transform.origin
+	var d1 = _camera.global_transform.origin + cam_forward
 	var d2 = d1 + Vector3.DOWN * 6
 	
 	if not space.intersect_ray(pos, d1, [self]):
 		for i in range(5):
-			var r = space.intersect_ray(d1 - camera.global_transform.basis.z.normalized() * 0.4 * i, d2, [self])
+			var r = space.intersect_ray(d1 + cam_forward * i, d2, [self])
 			if r:
-				var ground_check = space.intersect_ray(pos, pos + Vector3.DOWN * 2)
+				var ground_check = space.intersect_ray(pos,
+						pos + Vector3.DOWN * 2)
 			
 				if ground_check and ground_check.collider == r.collider:
 					return Vector3.ZERO
 				
-				var offset = check_clamber_box(r.position + Vector3.UP * 0.175)
+				var offset = _check_clamber_box(r.position + Vector3.UP * 0.175)
 				if offset == -Vector3.ONE:
 					return Vector3.ZERO
 				
@@ -90,9 +97,10 @@ func test_clamber_vent() -> Vector3:
 				
 	return Vector3.ZERO
 	
-#Nudging may need some refining
-func check_clamber_box(pos : Vector3, box_size : float = 0.15) -> Vector3:
-	var state = get_world().direct_space_state
+	
+# Nudging may need some refining
+func _check_clamber_box(pos : Vector3, box_size : float = 0.15) -> Vector3:
+	var state = _get_world().direct_space_state
 	var shape = BoxShape.new()
 	shape.extents = Vector3.ONE * box_size
 	
@@ -111,19 +119,19 @@ func check_clamber_box(pos : Vector3, box_size : float = 0.15) -> Vector3:
 	if result.size() == 0:
 		return Vector3.ZERO
 	
-	if !check_gap(pos + Vector3.FORWARD * 0.15):
+	if !_check_gap(pos + Vector3.FORWARD * 0.15):
 		return -Vector3.ONE
 
-	if !check_gap(pos + Vector3.BACK * 0.15):
+	if !_check_gap(pos + Vector3.BACK * 0.15):
 		return -Vector3.ONE
 		
-	if !check_gap(pos):
+	if !_check_gap(pos):
 		return -Vector3.ONE
 		
 	var offset = Vector3.ZERO
 	var checkPos = Vector3.ZERO
 	
-	var dir = -camera.global_transform.basis.z.normalized()
+	var dir = -_camera.global_transform.basis.z.normalized()
 	dir.y = 0
 		
 	for i in range(4):
@@ -141,8 +149,8 @@ func check_clamber_box(pos : Vector3, box_size : float = 0.15) -> Vector3:
 	
 	return -Vector3.ONE
 	
-func check_gap(pos : Vector3) -> bool:
-	var space = get_world().direct_space_state
+func _check_gap(pos : Vector3) -> bool:
+	var space = _get_world().direct_space_state
 	
 	var c = 0
 	

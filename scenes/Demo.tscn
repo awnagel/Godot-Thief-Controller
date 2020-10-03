@@ -1,8 +1,8 @@
 [gd_scene load_steps=9 format=2]
 
-[ext_resource path="res://scenes/Player.tscn" type="PackedScene" id=1]
+[ext_resource path="res://prefabs/Player.tscn" type="PackedScene" id=1]
 [ext_resource path="res://scenes/Worldspawn.tscn" type="PackedScene" id=2]
-[ext_resource path="res://checkerboard.png" type="Texture" id=3]
+[ext_resource path="res://texture/checkerboard.png" type="Texture" id=3]
 
 [sub_resource type="ProceduralSky" id=1]
 sky_energy = 0.5
@@ -65,16 +65,16 @@ transform = Transform( -3.14226e-09, -0.107219, 0, 0.179884, -1.62921e-07, 0, 0,
 transform = Transform( -3.14226e-09, -0.107219, 0, 0.179884, -1.62921e-07, 0, 0, 0, 0.482195, -0.970431, 0.604947, -1.46484 )
 
 [node name="Worldspawn7" parent="Level Geometry" instance=ExtResource( 2 )]
-transform = Transform( -8.96064e-09, -0.4, 0, 0.055, -6.51683e-08, 0, 0, 0, 1.4, -3.31056, 0.968637, 3.19321 )
+transform = Transform( -3.64941e-08, -0.4, 0, 0.223999, -6.51683e-08, 0, 0, 0, 1.4, -3.31056, 0.968637, 3.19321 )
 
 [node name="Worldspawn17" parent="Level Geometry" instance=ExtResource( 2 )]
-transform = Transform( -8.96064e-09, -0.4, 0, 0.055, -6.51683e-08, 0, 0, 0, 0.4, -2.50804, 0.968637, 4.13493 )
+transform = Transform( -3.64941e-08, -0.4, 0, 0.223999, -6.51683e-08, 0, 0, 0, 0.4, -2.50804, 0.968637, 4.13493 )
 
 [node name="Worldspawn18" parent="Level Geometry" instance=ExtResource( 2 )]
-transform = Transform( -8.96064e-09, -0.4, 0, 0.055, -6.51683e-08, 0, 0, 0, 0.4, -2.50804, 0.968637, 2.18762 )
+transform = Transform( -3.64941e-08, -0.4, 0, 0.223999, -6.51683e-08, 0, 0, 0, 0.4, -2.50804, 0.968637, 2.18762 )
 
 [node name="Worldspawn16" parent="Level Geometry" instance=ExtResource( 2 )]
-transform = Transform( -8.96064e-09, -0.4, 0, 0.055, -6.51683e-08, 0, 0, 0, 1.4, -1.69461, 0.968637, 3.19321 )
+transform = Transform( -3.64941e-08, -0.4, 0, 0.223999, -6.51683e-08, 0, 0, 0, 1.4, -1.69461, 0.968637, 3.19321 )
 
 [node name="Worldspawn3" parent="Level Geometry" instance=ExtResource( 2 )]
 transform = Transform( 0.173809, 0, -0.257689, 0, 1, 0, 0.0463541, 0, 0.966228, 1.79538, 0.430111, 1.18068 )

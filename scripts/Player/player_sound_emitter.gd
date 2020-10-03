@@ -1,4 +1,5 @@
 extends Area
+class_name PlayerSoundEmitter
 
 var radius = 1.0
 
