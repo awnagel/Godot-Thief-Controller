@@ -19,9 +19,9 @@ const TEXTURE_SOUND_LIB = {
 	}
 }
 
-export var speed : float = 1.0
-export var gravity : float = 60.0
-export var jump_force : float = 10.0
+export var speed : float = 0.5
+export var gravity : float = 40.0
+export var jump_force : float = 9.0
 export var move_drag : float = 0.2
 export(float, -45.0, -8.0, 1.0) var max_lean = -10.0
 export var interact_distance : float = 0.75

@@ -25,9 +25,6 @@ albedo_texture = ExtResource( 3 )
 environment = SubResource( 2 )
 
 [node name="Player" parent="." instance=ExtResource( 1 )]
-speed = 0.5
-gravity = 40.0
-jump_force = 9.0
 
 [node name="Level Geometry" type="Spatial" parent="."]
 
