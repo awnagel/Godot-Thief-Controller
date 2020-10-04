@@ -46,7 +46,7 @@ var _throw_wait_time : float = 400
 var _jumping : bool = false
 var _bob_time : float = 0.0
 
-onready var _camera : Camera = $Camera
+onready var _camera : ShakeCamera = $Camera
 onready var _collider : CollisionShape = $Collider
 onready var _light_indicator : ProgressBar = $Camera/CanvasLayer/LightIndicator
 onready var _surface_detector : RayCast = $SurfaceDetector
@@ -76,6 +76,7 @@ func _input(event) -> void:
 		rotation_degrees.y -= event.relative.x * mouse_sens
 		_camera.rotation_degrees.x -= event.relative.y * mouse_sens
 		_camera.rotation_degrees.x = clamp(_camera.rotation_degrees.x, -90, 90)
+		_camera._camera_rotation_reset = _camera.rotation_degrees
 
 
 func _physics_process(delta) -> void:
@@ -196,8 +197,9 @@ func _walk(delta, speed_mod : float = 1.0) -> void:
 	velocity = move_and_slide((velocity * speed_mod) + get_floor_velocity(),
 			Vector3.UP, true, 4, PI, false)
 	
-	if is_on_floor() and !grounded:
+	if is_on_floor() and !grounded and state != State.STATE_CROUCHING:
 		_audio_player.play_land_sound()
+		_camera.add_stress(0.35)
 
 	grounded = is_on_floor()
 	
@@ -354,3 +356,4 @@ func _drag(damping : float = 0.5, s2ms : int = 15) -> void:
 func _throw(throw_force : float = 10.0) -> void:
 	var d = -_camera.global_transform.basis.z.normalized()
 	drag_object.apply_central_impulse(d * throw_force)
+	_camera.add_stress(0.2)

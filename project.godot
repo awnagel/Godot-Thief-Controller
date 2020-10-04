@@ -12,40 +12,45 @@ _global_script_classes=[ {
 "base": "Object",
 "class": "ClamberManager",
 "language": "GDScript",
-"path": "res://scripts/Player/clamber_manager.gd"
+"path": "res://scripts/player/clamber_manager.gd"
 }, {
 "base": "Spatial",
 "class": "LightDetector",
 "language": "GDScript",
-"path": "res://scripts/Player/light_detector.gd"
+"path": "res://scripts/player/light_detector.gd"
 }, {
 "base": "KinematicBody",
 "class": "Player",
 "language": "GDScript",
-"path": "res://scripts/Player/player.gd"
+"path": "res://scripts/player/player.gd"
 }, {
 "base": "AudioStreamPlayer",
 "class": "PlayerAudio",
 "language": "GDScript",
-"path": "res://scripts/Player/player_audio.gd"
+"path": "res://scripts/player/player_audio.gd"
 }, {
 "base": "Area",
 "class": "PlayerSoundEmitter",
 "language": "GDScript",
-"path": "res://scripts/Player/player_sound_emitter.gd"
+"path": "res://scripts/player/player_sound_emitter.gd"
+}, {
+"base": "Camera",
+"class": "ShakeCamera",
+"language": "GDScript",
+"path": "res://scripts/player/player_camera.gd"
 } ]
 _global_script_class_icons={
 "ClamberManager": "",
 "LightDetector": "",
 "Player": "",
 "PlayerAudio": "",
-"PlayerSoundEmitter": ""
+"PlayerSoundEmitter": "",
+"ShakeCamera": ""
 }
 
 [application]
 
 config/name="ThiefLike"
-run/main_scene="res://scenes/Demo.tscn"
 config/icon="res://icon.png"
 
 [input]
