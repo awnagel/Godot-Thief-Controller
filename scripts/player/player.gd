@@ -8,6 +8,7 @@ enum State {
 	STATE_CLAMBERING_RISE,
 	STATE_CLAMBERING_LEDGE,
 	STATE_CLAMBERING_VENT,
+	STATE_NOCLIP
 }
 
 # Add texture and the path of the folder with the corresponding sound files
@@ -36,15 +37,21 @@ var velocity : Vector3 = Vector3.ZERO
 var drag_object : RigidBody = null
 
 var _clamber_m = null
+
 var _bob_reset : float = 0.0
 var _camera_pos_normal : Vector3 = Vector3.ZERO
+
 var _collider_normal_radius : float = 0.0
 var _collider_normal_height : float = 0.0
 var _collision_normal_offset : float = 0.0
+
 var _click_timer : float = 0.0
 var _throw_wait_time : float = 400	
+
 var _jumping : bool = false
 var _bob_time : float = 0.0
+
+var _normal_collision_layer_and_mask : int = 1
 
 onready var _camera : ShakeCamera = $Camera
 onready var _collider : CollisionShape = $Collider
@@ -65,6 +72,8 @@ func _ready() -> void:
 	_collider_normal_height = _collider.shape.height
 	_collision_normal_offset = _collider.global_transform.origin.y
 	
+	_normal_collision_layer_and_mask = collision_layer
+	
 	_audio_player.load_footstep_sounds("sfx/breathe", 1)
 	_audio_player.load_footstep_sounds("sfx/landing", 2)
 	
@@ -77,12 +86,8 @@ func _input(event) -> void:
 		_camera.rotation_degrees.x -= event.relative.y * mouse_sens
 		_camera.rotation_degrees.x = clamp(_camera.rotation_degrees.x, -90, 90)
 		_camera._camera_rotation_reset = _camera.rotation_degrees
-
-
-func _physics_process(delta) -> void:
-	#if Input.is_action_just_released("ui_cancel"):
-	#	get_tree().quit()
 		
+func _physics_process(delta) -> void:
 	_camera_pos_normal = global_transform.origin + Vector3.UP * _bob_reset	
 	
 	_light_indicator.value = light_level
@@ -143,6 +148,12 @@ func _physics_process(delta) -> void:
 				global_transform.origin = clamber_destination
 				state = State.STATE_CROUCHING
 				return
+				
+		State.STATE_NOCLIP:
+			collision_layer = 2
+			collision_mask = 2
+			_noclip_walk()
+	
 	
 func _get_surface_texture() -> Dictionary:
 	if _surface_detector.get_collider():
@@ -179,6 +190,9 @@ func _handle_player_sound_emission() -> void:
 
 #TODO: Add in flight clambering
 func _walk(delta, speed_mod : float = 1.0) -> void:
+	collision_layer = _normal_collision_layer_and_mask
+	collision_mask = _normal_collision_layer_and_mask
+	
 	var move_dir = Vector3()
 	move_dir.x = (Input.get_action_strength("right") - Input.get_action_strength("left"))
 	move_dir.z = (Input.get_action_strength("back") - Input.get_action_strength("forward"))
@@ -246,6 +260,17 @@ func _head_bob(delta : float) -> void:
 	var z_bob = sin(_bob_time * (2 * PI)) * velocity.length() * 0.2
 	_camera.global_transform.origin.y += y_bob
 	_camera.rotation_degrees.z = z_bob
+	
+	
+func _noclip_walk() -> void:
+	var move_dir = Vector3()
+	move_dir.x = (Input.get_action_strength("right") - Input.get_action_strength("left"))
+	move_dir.z = (Input.get_action_strength("back") - Input.get_action_strength("forward"))
+	move_dir = move_dir.normalized()	
+	move_dir = move_dir.rotated(Vector3.RIGHT, _camera.rotation.x)
+	move_dir = move_dir.rotated(Vector3.UP, rotation.y)
+	
+	move_and_slide(move_dir * speed * 3.0)
 	
 	
 # There seems to be an issue

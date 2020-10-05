@@ -50,7 +50,7 @@ _global_script_class_icons={
 
 [application]
 
-config/name="ThiefLike"
+config/name="Godot Thief Controller"
 config/icon="res://icon.png"
 
 [input]
