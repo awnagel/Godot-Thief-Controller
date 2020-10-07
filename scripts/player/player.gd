@@ -106,6 +106,10 @@ func _physics_process(delta) -> void:
 			if Input.is_action_pressed("sneak"):
 				_walk(delta, 0.75)
 				return
+				
+			if Input.is_action_just_pressed("noclip"):
+				state = State.STATE_NOCLIP
+				return
 			
 			_walk(delta)
 		
@@ -150,6 +154,10 @@ func _physics_process(delta) -> void:
 				return
 				
 		State.STATE_NOCLIP:
+			if Input.is_action_just_pressed("noclip"):
+				state = State.STATE_WALKING
+				return
+			
 			collision_layer = 2
 			collision_mask = 2
 			_noclip_walk()
@@ -211,9 +219,9 @@ func _walk(delta, speed_mod : float = 1.0) -> void:
 	velocity = move_and_slide((velocity * speed_mod) + get_floor_velocity(),
 			Vector3.UP, true, 4, PI, false)
 	
-	if is_on_floor() and !grounded and state != State.STATE_CROUCHING:
+	if is_on_floor() and !grounded and state != State.STATE_CROUCHING and _camera.stress < 0.1:
 		_audio_player.play_land_sound()
-		_camera.add_stress(0.35)
+		_camera.add_stress(0.15)
 
 	grounded = is_on_floor()
 	
@@ -347,6 +355,13 @@ func _process_frob_and_drag():
 			var c = _frob_raycast.get_collider()
 			if drag_object == null and c is RigidBody:
 				if c.scale > (Vector3.ONE * 5):
+					return
+				
+				var w = get_world().direct_space_state
+				var r = w.intersect_ray(c.global_transform.origin,
+						c.global_transform.origin + Vector3.UP * 0.5)
+						
+				if r and r.collider == self:
 					return
 				
 				drag_object = c
