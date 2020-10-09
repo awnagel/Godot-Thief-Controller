@@ -8,7 +8,7 @@ enum State {
 	STATE_CLAMBERING_RISE,
 	STATE_CLAMBERING_LEDGE,
 	STATE_CLAMBERING_VENT,
-	STATE_NOCLIP
+	STATE_NOCLIP,
 }
 
 # Add texture and the path of the folder with the corresponding sound files
@@ -80,12 +80,19 @@ func _ready() -> void:
 	if lock_mouse:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
+
 func _input(event) -> void:
 	if event is InputEventMouseMotion:
-		rotation_degrees.y -= event.relative.x * mouse_sens
-		_camera.rotation_degrees.x -= event.relative.y * mouse_sens
+		var m = 1.0
+		
+		if _camera.state == _camera.CameraState.STATE_ZOOM:
+			m = _camera.zoom_camera_sens_mod
+		
+		rotation_degrees.y -= event.relative.x * mouse_sens * m
+		_camera.rotation_degrees.x -= event.relative.y * mouse_sens * m
 		_camera.rotation_degrees.x = clamp(_camera.rotation_degrees.x, -90, 90)
 		_camera._camera_rotation_reset = _camera.rotation_degrees
+		
 		
 func _physics_process(delta) -> void:
 	_camera_pos_normal = global_transform.origin + Vector3.UP * _bob_reset	
@@ -110,6 +117,11 @@ func _physics_process(delta) -> void:
 			if Input.is_action_just_pressed("noclip"):
 				state = State.STATE_NOCLIP
 				return
+			
+			if Input.is_action_pressed("zoom"):
+				_camera.state = _camera.CameraState.STATE_ZOOM
+			else:
+				_camera.state = _camera.CameraState.STATE_NORMAL
 			
 			_walk(delta)
 		
@@ -176,6 +188,10 @@ func _get_surface_texture() -> Dictionary:
 		
 		if mesh.get_surface_material(0) != null:
 				var tex = mesh.get_surface_material(0).albedo_texture
+				
+				if !tex:
+					return {}
+				
 				var path = tex.resource_path.split("/")
 				var n = path[path.size() - 1].split(".")[0]
 				if TEXTURE_SOUND_LIB.has(n):

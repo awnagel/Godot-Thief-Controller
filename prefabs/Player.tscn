@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://scripts/player/player.gd" type="Script" id=1]
 [ext_resource path="res://prefabs/LightDetector.tscn" type="PackedScene" id=2]
 [ext_resource path="res://scripts/player/player_audio.gd" type="Script" id=3]
 [ext_resource path="res://scripts/player/player_sound_emitter.gd" type="Script" id=4]
 [ext_resource path="res://scripts/player/player_camera.gd" type="Script" id=5]
+[ext_resource path="res://texture/crosshair_zoom.png" type="Texture" id=6]
 
 [sub_resource type="CapsuleShape" id=1]
 
@@ -52,6 +53,20 @@ margin_right = 126.0
 margin_bottom = 40.0
 max_value = 1.0
 percent_visible = false
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ZoomOverlay" type="TextureRect" parent="Camera/CanvasLayer"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -64.0
+margin_top = -64.0
+margin_right = 64.0
+margin_bottom = 64.0
+texture = ExtResource( 6 )
 __meta__ = {
 "_edit_use_anchors_": false
 }

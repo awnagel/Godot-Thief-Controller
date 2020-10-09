@@ -13,3 +13,4 @@ func _process(_delta):
 	
 	if $CollisionShape.shape:
 		$CollisionShape.shape.radius = radius
+	
