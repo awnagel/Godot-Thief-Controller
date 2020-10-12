@@ -32,20 +32,27 @@ maxRoll = 10.0
 
 [node name="CanvasLayer" type="CanvasLayer" parent="Camera"]
 
-[node name="Crosshair" type="ColorRect" parent="Camera/CanvasLayer"]
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-margin_left = -1.0
-margin_top = -1.0
-margin_right = 3.0
-margin_bottom = 3.0
+[node name="PlayerUI" type="Control" parent="Camera/CanvasLayer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="LightIndicator" type="ProgressBar" parent="Camera/CanvasLayer"]
+[node name="Crosshair" type="TextureRect" parent="Camera/CanvasLayer/PlayerUI"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -8.0
+margin_top = -8.0
+margin_right = 8.0
+margin_bottom = 8.0
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="LightIndicator" type="ProgressBar" parent="Camera/CanvasLayer/PlayerUI"]
 anchor_left = 0.5
 anchor_right = 0.5
 margin_left = -126.0
@@ -54,10 +61,10 @@ margin_bottom = 40.0
 max_value = 1.0
 percent_visible = false
 __meta__ = {
-"_edit_use_anchors_": false
+"_edit_use_anchors_": true
 }
 
-[node name="ZoomOverlay" type="TextureRect" parent="Camera/CanvasLayer"]
+[node name="ZoomOverlay" type="TextureRect" parent="Camera/CanvasLayer/PlayerUI"]
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -68,7 +75,7 @@ margin_right = 64.0
 margin_bottom = 64.0
 texture = ExtResource( 6 )
 __meta__ = {
-"_edit_use_anchors_": false
+"_edit_use_anchors_": true
 }
 
 [node name="FrobCast" type="RayCast" parent="Camera"]

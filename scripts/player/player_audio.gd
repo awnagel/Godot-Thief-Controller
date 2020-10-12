@@ -31,7 +31,7 @@ func load_footstep_sounds(sound_dir, type : int) -> void:
 	
 	var sound = snd_dir.get_next()
 	while sound != "":
-		if not sound.ends_with(".import"):
+		if not sound.ends_with(".import") and sound.ends_with(".wav"):
 			if type == 0:
 				_footstep_sounds.append(load(sound_dir + "/" + sound))
 			elif type == 1:

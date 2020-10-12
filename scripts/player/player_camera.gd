@@ -20,18 +20,23 @@ var shake : float = 0.0
 var state = CameraState.STATE_NORMAL
 
 var _camera_rotation_reset : Vector3 = Vector3()
+var _crosshair_textures : Dictionary = {}
 
-onready var zoom_overlay : TextureRect = $CanvasLayer/ZoomOverlay
+onready var zoom_overlay : TextureRect = $CanvasLayer/PlayerUI/ZoomOverlay
+
+func _ready():
+	_crosshair_textures = _load_crosshair_textures("res://texture/player ui")
+
 
 # TODO: Add in some sort of rotation reset.
 func _process(_delta):
 	if stress == 0.0:
 		_camera_rotation_reset = rotation_degrees
 	
-	rotation_degrees = _processshake(_camera_rotation_reset, _delta)
+	rotation_degrees = _process_shake(_camera_rotation_reset, _delta)
 
 
-func _processshake(angle_center : Vector3, delta : float) -> Vector3:
+func _process_shake(angle_center : Vector3, delta : float) -> Vector3:
 	var mod = 1.0
 	if state == CameraState.STATE_ZOOM:
 		mod = zoom_camera_sens_mod
@@ -68,3 +73,35 @@ func _get_noise(noise_seed : float, time : float) -> float:
 func add_stress(amount : float) -> void:
 	stress += amount
 	stress = clamp(stress, 0.0, 1.0)
+
+func set_crosshair_state(new_state : String):
+	if _crosshair_textures.has(new_state):
+		$CanvasLayer/PlayerUI/Crosshair.texture = _crosshair_textures[new_state]
+
+func _load_crosshair_textures(texture_dir : String) -> Dictionary:
+	if texture_dir == "":
+		return {}
+	
+	if texture_dir.ends_with("/"):
+		texture_dir.erase(texture_dir.length() - 1, 1)
+		
+	if not "res://" in texture_dir:
+		texture_dir = "res://" + texture_dir
+		
+	var textures = {}
+		
+	var tex_dir = Directory.new()
+	tex_dir.open(texture_dir)
+	tex_dir.list_dir_begin(true)
+	
+	var texture = tex_dir.get_next()
+	while texture != "":
+		if not texture.ends_with(".import") and texture.ends_with(".png"):
+			var t = load(texture_dir + "/" + texture)
+			var s = texture.split("/")[0]
+			s = s.split(".")[0]
+			textures[s] = t
+			
+		texture = tex_dir.get_next()
+
+	return textures

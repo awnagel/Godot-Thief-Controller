@@ -55,7 +55,7 @@ var _normal_collision_layer_and_mask : int = 1
 
 onready var _camera : ShakeCamera = $Camera
 onready var _collider : CollisionShape = $Collider
-onready var _light_indicator : ProgressBar = $Camera/CanvasLayer/LightIndicator
+onready var _light_indicator : ProgressBar = $Camera/CanvasLayer/PlayerUI/LightIndicator
 onready var _surface_detector : RayCast = $SurfaceDetector
 onready var _sound_emitter : PlayerSoundEmitter = $SoundEmitter
 onready var _audio_player : PlayerAudio = $Audio
@@ -79,6 +79,8 @@ func _ready() -> void:
 	
 	if lock_mouse:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		
+	_camera.set_crosshair_state("normal")
 
 
 func _input(event) -> void:
@@ -294,7 +296,7 @@ func _noclip_walk() -> void:
 	move_dir = move_dir.rotated(Vector3.RIGHT, _camera.rotation.x)
 	move_dir = move_dir.rotated(Vector3.UP, rotation.y)
 	
-	move_and_slide(move_dir * speed * 3.0)
+	var _vel = move_and_slide(move_dir * speed * 3.0)
 	
 	
 # There seems to be an issue
@@ -355,9 +357,36 @@ func _process_frob_and_drag():
 			if _click_timer == 0.0:
 				return
 			
+			_camera.set_crosshair_state("normal")
 			_click_timer = 0.0
 			_throw()
 			drag_object = null
+	
+	if _frob_raycast.is_colliding():
+		var c = _frob_raycast.get_collider()
+		if drag_object == null and c is RigidBody:
+			if c.scale > (Vector3.ONE * 5):
+				return
+				
+			var w = get_world().direct_space_state
+			var r = w.intersect_ray(c.global_transform.origin,
+					c.global_transform.origin + Vector3.UP * 0.5)
+						
+			if r and r.collider == self:
+				return
+				
+			_camera.set_crosshair_state("interact")
+				
+			if Input.is_action_just_released("mouse_left"):
+				_camera.set_crosshair_state("dragging")
+				drag_object = c
+				drag_object.linear_velocity = Vector3.ZERO
+		elif c.has_method("on_frob"):
+			#_camera.set_crosshair_state("interact")
+			
+			if Input.is_action_just_released("mouse_left"):
+				_camera.set_crosshair_state("normal")
+				c.on_frob()	
 		
 	if Input.is_action_just_released("mouse_left"):	
 		if drag_object != null:
@@ -365,37 +394,23 @@ func _process_frob_and_drag():
 				if _click_timer == 0.0:
 					return
 				
+				_camera.set_crosshair_state("normal")
 				drag_object = null
 				_click_timer = 0.0
-		elif _frob_raycast.is_colliding():
-			var c = _frob_raycast.get_collider()
-			if drag_object == null and c is RigidBody:
-				if c.scale > (Vector3.ONE * 5):
-					return
-				
-				var w = get_world().direct_space_state
-				var r = w.intersect_ray(c.global_transform.origin,
-						c.global_transform.origin + Vector3.UP * 0.5)
-						
-				if r and r.collider == self:
-					return
-				
-				drag_object = c
-				drag_object.linear_velocity = Vector3.ZERO
-			elif c.has_method("on_frob"):
-				c.on_frob()
 				
 	if Input.is_action_just_pressed("mouse_right") and drag_object != null:
 		drag_object.rotation_degrees.y += 45
 		drag_object.rotation_degrees.x = 90
 				
-	if drag_object != null:
+	if drag_object:
 		_drag()
 		
 		var d = _camera.global_transform.origin.distance_to(drag_object.global_transform.origin)
 		if  d > interact_distance + 0.35:
 			drag_object = null
 	
+	if !drag_object and not _frob_raycast.is_colliding():
+		_camera.set_crosshair_state("normal")
 	
 func _drag(damping : float = 0.5, s2ms : int = 15) -> void:
 	var d = _frob_raycast.global_transform.basis.z.normalized()
