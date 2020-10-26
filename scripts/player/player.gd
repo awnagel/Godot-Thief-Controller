@@ -5,6 +5,7 @@ enum State {
 	STATE_WALKING,
 	STATE_LEANING,
 	STATE_CROUCHING,
+	STATE_CRAWLING,
 	STATE_CLAMBERING_RISE,
 	STATE_CLAMBERING_LEDGE,
 	STATE_CLAMBERING_VENT,
@@ -112,6 +113,10 @@ func _physics_process(delta) -> void:
 				state = State.STATE_CROUCHING
 				return
 			
+			if Input.is_action_pressed("crawl"):
+				state = State.STATE_CRAWLING
+				return
+
 			if Input.is_action_pressed("sneak"):
 				_walk(delta, 0.75)
 				return
@@ -127,14 +132,19 @@ func _physics_process(delta) -> void:
 			
 			_walk(delta)
 		
-		State.STATE_CROUCHING:
-			_process_frob_and_drag()
-			_crouch()
-			_walk(delta, 0.75)
-			
 		State.STATE_LEANING:
 			_process_frob_and_drag()
 			_lean()
+
+		State.STATE_CROUCHING:
+			_process_frob_and_drag()
+			_crouch()
+			_walk(delta, 0.65)
+			
+		State.STATE_CRAWLING:
+			_crawling()
+			crawl_headmove(delta)
+			_walk(delta, 0.45)
 			
 		State.STATE_CLAMBERING_RISE:
 			var pos = global_transform.origin
@@ -298,7 +308,24 @@ func _noclip_walk() -> void:
 	
 	var _vel = move_and_slide(move_dir * speed * 3.0)
 	
+
+func _lean() -> void:
+	var axis = (Input.get_action_strength("right") - Input.get_action_strength("left"))
 	
+	var from = _camera.global_transform.origin
+	var to = _camera_pos_normal + (_camera.global_transform.basis.x * 0.2 * axis)
+	_camera.global_transform.origin = lerp(from, to, 0.1)
+	
+	from = _camera.rotation_degrees.z
+	to = max_lean * axis
+	_camera.rotation_degrees.z = lerp(from, to, 0.1)
+	
+	var diff = _camera.global_transform.origin - _camera_pos_normal
+	if axis == 0 and diff.length() <= 0.01:
+		state = State.STATE_WALKING
+		return
+	
+
 # There seems to be an issue
 # where if the plane the player is on is too thin
 # the player intersects with the floor.	
@@ -306,9 +333,11 @@ func _crouch() -> void:
 	var from = _collider.shape.height
 	var to = _collider_normal_height * 0.5
 	_collider.shape.height = lerp(from, to, 0.1)
+	
 	from = _collider.shape.radius
 	to = _collider_normal_radius * 0.5
 	_collider.shape.radius = lerp(from, to, 0.1)
+	
 	_collider.rotation_degrees.x = 0
 	
 	from = _camera.global_transform.origin
@@ -330,22 +359,41 @@ func _crouch() -> void:
 			_collider.rotation_degrees.x = 90
 			return
 		
-		
-func _lean() -> void:
-	var axis = (Input.get_action_strength("right") - Input.get_action_strength("left"))
+
+func _crawling() -> void:
+	var from = _collider.shape.height
+	var to = _collider_normal_height * 3.0
+	_collider.shape.height = lerp(from, to, 0.1)
 	
-	var from = _camera.global_transform.origin
-	var to = _camera_pos_normal + (_camera.global_transform.basis.x * 0.2 * axis)
+	from = _collider.shape.radius
+	to = _collider_normal_radius * 0.75
+	_collider.shape.radius = lerp(from, to, 0.1)
+	
+	_collider.rotation_degrees.x = lerp(_collider.rotation_degrees.x, 0, 0.1)
+	
+	from = _camera.global_transform.origin
+	to = _camera_pos_normal + (Vector3.DOWN * _bob_reset * 0.6)
 	_camera.global_transform.origin = lerp(from, to, 0.1)
-	
-	from = _camera.rotation_degrees.z
-	to = max_lean * axis
-	_camera.rotation_degrees.z = lerp(from, to, 0.1)
-	
-	var diff = _camera.global_transform.origin - _camera_pos_normal
-	if axis == 0 and diff.length() <= 0.01:
-		state = State.STATE_WALKING
-		return		
+
+	if !Input.is_action_pressed("crawl") and state == State.STATE_CRAWLING:
+		var pos = global_transform.origin
+		var space = get_world().direct_space_state
+
+		var r_up = space.intersect_ray(pos, pos + Vector3.UP * _bob_reset * 0.2, [self])
+
+		if !r_up:
+			state = State.STATE_WALKING
+			_camera.global_transform.origin = pos + Vector3.UP * _bob_reset
+			_collider.shape.height = _collider_normal_height
+			_collider.shape.radius = _collider_normal_radius
+			_collider.rotation_degrees.x = 90
+			return
+
+
+func crawl_headmove(delta : float) -> void:
+	_bob_time += delta
+	var y_bob = sin(_bob_time * (2 * PI)) * velocity.length() * 4.0
+	_camera.rotation_degrees.y = y_bob
 
 	
 func _process_frob_and_drag():
