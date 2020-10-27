@@ -24,6 +24,8 @@ const TEXTURE_SOUND_LIB = {
 export var speed : float = 0.5
 export var gravity : float = 40.0
 export var jump_force : float = 9.0
+export(float, 0.1, 1.0) var crouch_rate = 0.5
+export(float, 0.1, 1.0) var crawl_rate = 0.7
 export var move_drag : float = 0.2
 export(float, -45.0, -8.0, 1.0) var max_lean = -10.0
 export var interact_distance : float = 0.75
@@ -86,19 +88,28 @@ func _ready() -> void:
 
 func _input(event) -> void:
 	if event is InputEventMouseMotion:
+		if (state == State.STATE_CLAMBERING_LEDGE 
+			or state == State.STATE_CLAMBERING_RISE 
+			or state == State.STATE_CLAMBERING_VENT):
+			return
+		
 		var m = 1.0
 		
 		if _camera.state == _camera.CameraState.STATE_ZOOM:
 			m = _camera.zoom_camera_sens_mod
 		
 		rotation_degrees.y -= event.relative.x * mouse_sens * m
-		_camera.rotation_degrees.x -= event.relative.y * mouse_sens * m
-		_camera.rotation_degrees.x = clamp(_camera.rotation_degrees.x, -90, 90)
+		
+		if state != State.STATE_CRAWLING:
+			_camera.rotation_degrees.x -= event.relative.y * mouse_sens * m
+			_camera.rotation_degrees.x = clamp(_camera.rotation_degrees.x, -90, 90)
+
 		_camera._camera_rotation_reset = _camera.rotation_degrees
 		
 		
 func _physics_process(delta) -> void:
-	_camera_pos_normal = global_transform.origin + Vector3.UP * _bob_reset	
+	_camera_pos_normal = global_transform.origin + Vector3.UP * _bob_reset
+	#_camera_pos_normal.z = _camera.global_transform.origin.z
 	
 	_light_indicator.value = light_level
 	
@@ -330,18 +341,20 @@ func _lean() -> void:
 # where if the plane the player is on is too thin
 # the player intersects with the floor.	
 func _crouch() -> void:
+	crouch_rate = clamp(crouch_rate, 0.11, 1.0)
+
 	var from = _collider.shape.height
-	var to = _collider_normal_height * 0.5
+	var to = _collider_normal_height * crouch_rate
 	_collider.shape.height = lerp(from, to, 0.1)
 	
 	from = _collider.shape.radius
-	to = _collider_normal_radius * 0.5
+	to = _collider_normal_radius * crouch_rate
 	_collider.shape.radius = lerp(from, to, 0.1)
 	
 	_collider.rotation_degrees.x = 0
 	
 	from = _camera.global_transform.origin
-	to = _camera_pos_normal + (Vector3.DOWN * _bob_reset * 0.4)
+	to = _camera_pos_normal + (Vector3.DOWN * _bob_reset * (crouch_rate - 0.1))
 	_camera.global_transform.origin = lerp(from, to, 0.1)
 	
 	if !Input.is_action_pressed("crouch") and state == State.STATE_CROUCHING:
@@ -361,18 +374,21 @@ func _crouch() -> void:
 		
 
 func _crawling() -> void:
+	crawl_rate = clamp(crawl_rate, 0.11, 1.0)
 	var from = _collider.shape.height
-	var to = _collider_normal_height * 3.0
+	var to = _collider_normal_height * (crawl_rate * 3.0)
 	_collider.shape.height = lerp(from, to, 0.1)
 	
 	from = _collider.shape.radius
-	to = _collider_normal_radius * 0.75
+	to = _collider_normal_radius * crawl_rate
 	_collider.shape.radius = lerp(from, to, 0.1)
 	
 	_collider.rotation_degrees.x = lerp(_collider.rotation_degrees.x, 0, 0.1)
 	
 	from = _camera.global_transform.origin
-	to = _camera_pos_normal + (Vector3.DOWN * _bob_reset * 0.6)
+	var forward = -_camera.global_transform.basis.z.normalized() * (crawl_rate - 0.4)
+	var down = Vector3.DOWN * _bob_reset * (crawl_rate - 0.1)
+	to = _camera_pos_normal + down + forward
 	_camera.global_transform.origin = lerp(from, to, 0.1)
 
 	if !Input.is_action_pressed("crawl") and state == State.STATE_CRAWLING:
@@ -397,7 +413,9 @@ func crawl_headmove(delta : float) -> void:
 
 	
 func _process_frob_and_drag():
-	if Input.is_action_just_pressed("mouse_left") and _click_timer == 0.0 and drag_object != null:
+	if (Input.is_action_just_pressed("mouse_left") 
+		and _click_timer == 0.0 
+		and drag_object != null):
 		_click_timer = OS.get_ticks_msec()
 		
 	if Input.is_action_pressed("mouse_left"):
@@ -460,6 +478,7 @@ func _process_frob_and_drag():
 	if !drag_object and not _frob_raycast.is_colliding():
 		_camera.set_crosshair_state("normal")
 	
+
 func _drag(damping : float = 0.5, s2ms : int = 15) -> void:
 	var d = _frob_raycast.global_transform.basis.z.normalized()
 	var dest = _frob_raycast.global_transform.origin - d * interact_distance
