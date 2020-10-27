@@ -46,7 +46,6 @@ var _camera_pos_normal : Vector3 = Vector3.ZERO
 
 var _collider_normal_radius : float = 0.0
 var _collider_normal_height : float = 0.0
-var _collision_normal_offset : float = 0.0
 
 var _click_timer : float = 0.0
 var _throw_wait_time : float = 400	
@@ -65,7 +64,7 @@ onready var _audio_player : PlayerAudio = $Audio
 onready var _frob_raycast : RayCast = $Camera/FrobCast
 
 func _ready() -> void:
-	_bob_reset = _camera.global_transform.origin.y
+	_bob_reset = _camera.global_transform.origin.y - global_transform.origin.y
 	
 	_frob_raycast.cast_to *= interact_distance
 	
@@ -73,7 +72,6 @@ func _ready() -> void:
 	
 	_collider_normal_radius = _collider.shape.radius
 	_collider_normal_height = _collider.shape.height
-	_collision_normal_offset = _collider.global_transform.origin.y
 	
 	_normal_collision_layer_and_mask = collision_layer
 	
@@ -260,7 +258,7 @@ func _walk(delta, speed_mod : float = 1.0) -> void:
 	
 	if is_on_floor() and !grounded and state != State.STATE_CROUCHING and _camera.stress < 0.1:
 		_audio_player.play_land_sound()
-		_camera.add_stress(0.15)
+		_camera.add_stress(0.25)
 
 	grounded = is_on_floor()
 	
@@ -383,6 +381,8 @@ func _crawling() -> void:
 	to = _collider_normal_radius * crawl_rate
 	_collider.shape.radius = lerp(from, to, 0.1)
 	
+	_camera.rotation_degrees.x = lerp(_camera.rotation_degrees.x, 0.0, 0.1)
+
 	_collider.rotation_degrees.x = lerp(_collider.rotation_degrees.x, 0, 0.1)
 	
 	from = _camera.global_transform.origin
