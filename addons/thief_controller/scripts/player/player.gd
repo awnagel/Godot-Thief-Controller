@@ -75,8 +75,9 @@ func _ready() -> void:
 	
 	_normal_collision_layer_and_mask = collision_layer
 	
-	_audio_player.load_footstep_sounds("sfx/breathe", 1)
-	_audio_player.load_footstep_sounds("sfx/landing", 2)
+	_audio_player.load_sounds("addons/thief_controller/sfx/footsteps", 0)
+	_audio_player.load_sounds("addons/thief_controller/sfx/breathe", 1)
+	_audio_player.load_sounds("addons/thief_controller/sfx/landing", 2)
 	
 	if lock_mouse:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -108,7 +109,10 @@ func _input(event) -> void:
 func _physics_process(delta) -> void:
 	_camera_pos_normal = global_transform.origin + Vector3.UP * _bob_reset
 	#_camera_pos_normal.z = _camera.global_transform.origin.z
-	
+
+	$Viewport/Camera.global_transform.origin = _camera_pos_normal
+	$Viewport/Camera.rotation_degrees = _camera.rotation_degrees
+
 	_light_indicator.value = light_level
 	
 	match state:
@@ -146,11 +150,21 @@ func _physics_process(delta) -> void:
 			_lean()
 
 		State.STATE_CROUCHING:
+			if Input.is_action_pressed("zoom"):
+				_camera.state = _camera.CameraState.STATE_ZOOM
+			else:
+				_camera.state = _camera.CameraState.STATE_NORMAL
+
 			_process_frob_and_drag()
 			_crouch()
 			_walk(delta, 0.65)
 			
 		State.STATE_CRAWLING:
+			if Input.is_action_pressed("zoom"):
+				_camera.state = _camera.CameraState.STATE_ZOOM
+			else:
+				_camera.state = _camera.CameraState.STATE_NORMAL
+
 			_crawling()
 			crawl_headmove(delta)
 			_walk(delta, 0.45)
@@ -194,7 +208,8 @@ func _physics_process(delta) -> void:
 			collision_layer = 2
 			collision_mask = 2
 			_noclip_walk()
-	
+
+
 	
 func _get_surface_texture() -> Dictionary:
 	if _surface_detector.get_collider():
@@ -230,7 +245,7 @@ func _handle_player_sound_emission() -> void:
 	_sound_emitter.radius = result["amplifier"]
 	
 	if result.sfx_folder != "":
-		_audio_player.load_footstep_sounds(result.sfx_folder, 0)
+		_audio_player.load_sounds(result.sfx_folder, 0)
 
 
 #TODO: Add in flight clambering

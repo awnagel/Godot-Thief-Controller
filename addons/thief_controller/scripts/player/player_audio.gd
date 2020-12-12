@@ -10,7 +10,7 @@ var _clamber_sounds : Dictionary = {
 
 var _current_sound_dir : String = ""
 
-func load_footstep_sounds(sound_dir, type : int) -> void:
+func load_sounds(sound_dir, type : int) -> void:
 	if sound_dir == "":
 		return
 		
