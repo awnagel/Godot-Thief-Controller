@@ -9,43 +9,79 @@
 config_version=4
 
 _global_script_classes=[ {
+"base": "Resource",
+"class": "ThiefAudioLibrary",
+"language": "GDScript",
+"path": "res://addons/thief_controller/scripts/resources/audio_player_sounds.gd"
+}, {
+"base": "RigidBody",
+"class": "ThiefCharacterController",
+"language": "GDScript",
+"path": "res://addons/thief_controller/scripts/player/character_controller.gd"
+}, {
 "base": "Object",
-"class": "ClamberManager",
+"class": "ThiefClamberManager",
 "language": "GDScript",
 "path": "res://addons/thief_controller/scripts/player/clamber_manager.gd"
 }, {
+"base": "Resource",
+"class": "ThiefClamberSettings",
+"language": "GDScript",
+"path": "res://addons/thief_controller/scripts/resources/clamber_settings.gd"
+}, {
 "base": "Spatial",
-"class": "LightDetector",
+"class": "ThiefLightDetector",
 "language": "GDScript",
 "path": "res://addons/thief_controller/scripts/player/light_detector.gd"
 }, {
-"base": "Reference",
-"class": "Player",
+"base": "ThiefCharacterController",
+"class": "ThiefPlayer",
 "language": "GDScript",
 "path": "res://addons/thief_controller/scripts/player/player.gd"
 }, {
 "base": "AudioStreamPlayer",
-"class": "PlayerAudio",
+"class": "ThiefPlayerAudio",
 "language": "GDScript",
 "path": "res://addons/thief_controller/scripts/player/player_audio.gd"
 }, {
+"base": "Resource",
+"class": "ThiefSettings",
+"language": "GDScript",
+"path": "res://addons/thief_controller/scripts/resources/player_settings.gd"
+}, {
+"base": "Camera",
+"class": "ThiefShakeCamera",
+"language": "GDScript",
+"path": "res://addons/thief_controller/scripts/player/player_camera.gd"
+}, {
 "base": "Area",
-"class": "PlayerSoundEmitter",
+"class": "ThiefSoundEmitter",
 "language": "GDScript",
 "path": "res://addons/thief_controller/scripts/player/player_sound_emitter.gd"
 }, {
-"base": "Reference",
-"class": "ShakeCamera",
+"base": "Resource",
+"class": "ThiefSoundLibrary",
 "language": "GDScript",
-"path": "res://addons/thief_controller/scripts/player/player_camera.gd"
+"path": "res://addons/thief_controller/scripts/resources/sound_library.gd"
+}, {
+"base": "Resource",
+"class": "ThiefSoundPair",
+"language": "GDScript",
+"path": "res://addons/thief_controller/scripts/resources/sound_pair.gd"
 } ]
 _global_script_class_icons={
-"ClamberManager": "",
-"LightDetector": "",
-"Player": "",
-"PlayerAudio": "",
-"PlayerSoundEmitter": "",
-"ShakeCamera": ""
+"ThiefAudioLibrary": "",
+"ThiefCharacterController": "",
+"ThiefClamberManager": "",
+"ThiefClamberSettings": "",
+"ThiefLightDetector": "",
+"ThiefPlayer": "",
+"ThiefPlayerAudio": "",
+"ThiefSettings": "",
+"ThiefShakeCamera": "",
+"ThiefSoundEmitter": "",
+"ThiefSoundLibrary": "",
+"ThiefSoundPair": ""
 }
 
 [application]
@@ -57,42 +93,42 @@ config/icon="res://icon.png"
 
 forward={
 "deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":87,"unicode":0,"echo":false,"script":null)
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":87,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
  ]
 }
 back={
 "deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":83,"unicode":0,"echo":false,"script":null)
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":83,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
  ]
 }
 right={
 "deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":68,"unicode":0,"echo":false,"script":null)
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":68,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
  ]
 }
 left={
 "deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":65,"unicode":0,"echo":false,"script":null)
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":65,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
  ]
 }
 crouch={
 "deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777238,"unicode":0,"echo":false,"script":null)
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777238,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
  ]
 }
 lean={
 "deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":69,"unicode":0,"echo":false,"script":null)
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":69,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
  ]
 }
 sneak={
 "deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777237,"unicode":0,"echo":false,"script":null)
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777237,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
  ]
 }
 clamber={
 "deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":32,"unicode":0,"echo":false,"script":null)
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":32,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
  ]
 }
 mouse_left={
@@ -107,17 +143,17 @@ mouse_right={
 }
 noclip={
 "deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777244,"unicode":0,"echo":false,"script":null)
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777244,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
  ]
 }
 zoom={
 "deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":90,"unicode":0,"echo":false,"script":null)
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":90,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
  ]
 }
 crawl={
 "deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":88,"unicode":0,"echo":false,"script":null)
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":88,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
  ]
 }
 

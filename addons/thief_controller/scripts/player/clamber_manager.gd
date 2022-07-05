@@ -1,17 +1,25 @@
 extends Object
-class_name ClamberManager
+class_name ThiefClamberManager
 
 # Having clamber as a seperate class let's any object use the clamber function,
 # it just needs a clamber manager.
 
+var _clamber_forward = 1.5
+var _clamber_down = 6.0
+var _clamber_up = 4.0
+
 var _camera : Camera = null
 var _world : World = null
-var _user : KinematicBody = null
+var _user : Spatial = null
 
-func _init(User : KinematicBody, Current_Camera : Camera, User_World : World):
-	_camera = Current_Camera
-	_user = User
-	_world = User_World
+func _init(user: Spatial, camera: Camera, settings: ThiefClamberSettings):
+	_user = user
+	_camera = camera
+	_world = user.get_world()
+
+	_clamber_forward = settings.forward_distance
+	_clamber_down = settings.down_distance
+	_clamber_up = settings.up_distance
 
 
 func _get_world():
@@ -37,10 +45,10 @@ func attempt_clamber() -> Vector3:
 	
 		
 func _test_clamber_ledge() -> Vector3:
-	var user_forward = -_user.global_transform.basis.z.normalized()
+	var user_forward = _user.get_forward() * _clamber_forward
 	var space = _get_world().direct_space_state
 	var pos = _user.global_transform.origin
-	var d1 = pos + Vector3.UP * 1.25
+	var d1 = pos + Vector3.UP * _clamber_up
 	var d2 = d1 + user_forward
 	var d3 = d2 + Vector3.DOWN * 16
 	
@@ -49,10 +57,14 @@ func _test_clamber_ledge() -> Vector3:
 			if not space.intersect_ray(d1, d2 + user_forward * i):
 				for j in range(5):
 					d2 = d1 + user_forward * (j + 1)
+					d3 = d2 + Vector3.DOWN * _clamber_down
 					var r = space.intersect_ray(d2, d3)
 					if r:
 						var ground_check = space.intersect_ray(pos, 
-								pos + Vector3.DOWN * 2)
+								pos + Vector3.DOWN, [_user])
+								
+						if ground_check.empty():
+							return Vector3.ZERO
 				
 						if ground_check.collider == r.collider:
 							return Vector3.ZERO
@@ -70,11 +82,11 @@ func _test_clamber_ledge() -> Vector3:
 	
 	
 func _test_clamber_vent() -> Vector3:
-	var cam_forward = -_camera.global_transform.basis.z.normalized() * 0.4
+	var cam_forward = -_camera.global_transform.basis.z.normalized() * _clamber_forward 
 	var space = _get_world().direct_space_state
 	var pos = _user.global_transform.origin
 	var d1 = _camera.global_transform.origin + cam_forward
-	var d2 = d1 + Vector3.DOWN * 6
+	var d2 = d1 + Vector3.DOWN * 16
 	
 	if not space.intersect_ray(pos, d1, [self]):
 		for i in range(5):

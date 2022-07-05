@@ -1,0 +1,9 @@
+[gd_resource type="Resource" load_steps=2 format=2]
+
+[ext_resource path="res://addons/thief_controller/scripts/resources/sound_pair.gd" type="Script" id=1]
+
+[resource]
+script = ExtResource( 1 )
+texture_file_name = "checkerboard"
+amplifier = 5.0
+sfx_folder = "sfx/footsteps"

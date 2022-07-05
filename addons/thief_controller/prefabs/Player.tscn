@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=10 format=2]
 
 [ext_resource path="res://addons/thief_controller/scripts/player/player.gd" type="Script" id=1]
 [ext_resource path="res://addons/thief_controller/prefabs/LightDetector.tscn" type="PackedScene" id=2]
@@ -7,24 +7,29 @@
 [ext_resource path="res://addons/thief_controller/scripts/player/player_camera.gd" type="Script" id=5]
 [ext_resource path="res://addons/thief_controller/texture/crosshair_zoom.png" type="Texture" id=6]
 
-[sub_resource type="CapsuleShape" id=1]
+[sub_resource type="CylinderShape" id=3]
+radius = 0.5
+height = 1.5
 
 [sub_resource type="ViewportTexture" id=2]
 viewport_path = NodePath("Viewport")
 
-[node name="Player" type="KinematicBody"]
-transform = Transform( 0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.26, 0, 0, 0 )
+[sub_resource type="SphereShape" id=4]
+
+[node name="Player" type="RigidBody"]
+mode = 2
+custom_integrator = true
 script = ExtResource( 1 )
 
 [node name="Collider" type="CollisionShape" parent="."]
-transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 1.4, 0 )
-shape = SubResource( 1 )
+visible = false
+shape = SubResource( 3 )
 
 [node name="SurfaceDetector" type="RayCast" parent="."]
 enabled = true
 
 [node name="LightDetector" parent="." instance=ExtResource( 2 )]
-transform = Transform( 4, 0, 0, 0, 4, 0, 0, 0, 3.84615, 0, 0, 0 )
+transform = Transform( 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0 )
 
 [node name="Viewport" type="Viewport" parent="."]
 size = Vector2( 1000, 600 )
@@ -37,11 +42,10 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.624744, 0 )
 cull_mask = 4
 
 [node name="Camera" type="Camera" parent="."]
-transform = Transform( 4, 0, 0, 0, 4, 0, 0, 0, 3.84615, 0, 2.5, 0 )
+transform = Transform( 4, 0, 0, 0, 4, 0, 0, 0, 3.84615, 0, 0.5, 0 )
 cull_mask = 1048569
 current = true
 script = ExtResource( 5 )
-maxRoll = 10.0
 
 [node name="CanvasLayer" type="CanvasLayer" parent="Camera"]
 
@@ -97,6 +101,7 @@ scale = Vector2( 1.024, 0.996689 )
 texture = SubResource( 2 )
 
 [node name="FrobCast" type="RayCast" parent="Camera"]
+visible = false
 enabled = true
 cast_to = Vector3( 0, 0, -1 )
 
@@ -107,3 +112,4 @@ script = ExtResource( 3 )
 script = ExtResource( 4 )
 
 [node name="CollisionShape" type="CollisionShape" parent="SoundEmitter"]
+shape = SubResource( 4 )

@@ -1,5 +1,5 @@
 extends Spatial
-class_name LightDetector
+class_name ThiefLightDetector
 
 onready var _octahedron = $Octahedron
 onready var _viewport_top = $Viewport
@@ -8,9 +8,10 @@ onready var _cam_top = $Viewport/CameraTop
 onready var _cam_bottom = $Viewport2/CameraBottom
 
 export var light_detect_interval : float = 0.25
+export var ambient_light_correction : Color = Color.black
 var _last_time_since_detect : float = 0.0
 
-var _player : Player = null
+var _player : ThiefPlayer = null
 
 func _ready() -> void:
 	_player = get_parent()
@@ -21,7 +22,7 @@ func _get_time() -> float:
 
 
 func _process(_delta) -> void:
-	var new_pos = _player.global_transform.origin + Vector3.UP * 0.5
+	var new_pos = _player.global_transform.origin
 	
 	_octahedron.global_transform.origin = new_pos
 	_cam_top.global_transform.origin = new_pos
@@ -51,13 +52,18 @@ func get_light_level(top : bool = true) -> float:
 	img.lock()
 	
 	var p0 = img.get_pixel(0, 0)
-	var hl = 0.2126 * p0.r + 0.7152 * p0.g + 0.0722 * p0.b				
+	var hl = luminance(p0.r, p0.b, p0.g)				
 	
 	for y in img.get_height():
 		for x in img.get_width():
 			var p = img.get_pixel(x, y)
-			var l = 0.2126 * p.r + 0.7152 * p.g + 0.0722 * p.b
+			var l = luminance(p.r, p.b, p.g)
 			if l > hl:
 				hl = l
 	
 	return hl
+
+func luminance(r: float, g: float, b: float) -> float:
+	var base = Color(r, g, b, 1)
+	var adjusted = base - ambient_light_correction
+	return 0.2126 * adjusted.r + 0.7152 * adjusted.g + 0.0722 * adjusted.b

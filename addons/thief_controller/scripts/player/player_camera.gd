@@ -1,4 +1,4 @@
-class_name ShakeCamera
+class_name ThiefShakeCamera
 extends Camera
 
 enum CameraState {
@@ -25,8 +25,7 @@ var _crosshair_textures : Dictionary = {}
 onready var zoom_overlay : TextureRect = $CanvasLayer/PlayerUI/ZoomOverlay
 
 func _ready():
-	_crosshair_textures = _load_crosshair_textures("res://addons/thief_controller/texture/player ui")
-
+	_crosshair_textures = _load_crosshair_textures("res://addons/thief_controller/texture/player_ui")
 
 # TODO: Add in some sort of rotation reset.
 func _process(_delta):

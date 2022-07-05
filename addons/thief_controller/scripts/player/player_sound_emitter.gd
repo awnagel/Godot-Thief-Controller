@@ -1,5 +1,5 @@
 extends Area
-class_name PlayerSoundEmitter
+class_name ThiefSoundEmitter
 
 var radius = 1.0
 

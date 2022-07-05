@@ -1,5 +1,12 @@
 extends AudioStreamPlayer
-class_name PlayerAudio
+class_name ThiefPlayerAudio
+
+enum Types {
+	TYPE_FOOTSTEP,
+	TYPE_LANDING,
+	TYPE_BREATHE_IN,
+	TYPE_BREATHE_OUT,
+}
 
 var _footstep_sounds : Array = []
 var _landing_sounds : Array = []
@@ -10,38 +17,46 @@ var _clamber_sounds : Dictionary = {
 
 var _current_sound_dir : String = ""
 
-func load_sounds(sound_dir, type : int) -> void:
-	if sound_dir == "":
+func load_sounds(library: ThiefAudioLibrary):
+	if library == null:
 		return
-		
-	if _current_sound_dir == sound_dir:
-		return
-		
-	_current_sound_dir = sound_dir
+
+	for dir in library.footstep_sound_dirs:
+		_footstep_sounds.append_array(_load_directory(dir))
 	
-	if sound_dir.ends_with("/"):
-		sound_dir.erase(sound_dir.length() - 1, 1)
-		
-	if not "res://" in sound_dir:
-		sound_dir = "res://" + sound_dir
+	for dir in library.landing_sound_dirs:
+		_landing_sounds.append_array(_load_directory(dir))
+
+	for dir in library.breathe_in_sound_dirs:
+		_clamber_sounds["in"].append_array(_load_directory(dir))
+
+	for dir in library.breathe_out_sound_dirs:
+		_clamber_sounds["out"].append_array(_load_directory(dir))
+
+func load_sound_folder(path: String, type: int):
+	match type:
+		Types.TYPE_FOOTSTEP:
+			_footstep_sounds.append_array(_load_directory(path))
+		Types.TYPE_LANDING:
+			_landing_sounds.append_array(_load_directory(path))
+		Types.TYPE_BREATHE_IN:
+			_clamber_sounds["in"].append_array(_load_directory(path))
+		Types.TYPE_BREATHE_OUT:
+			_clamber_sounds["out"].append_array(_load_directory(path))
+
+func _load_directory(path) -> Array:
+	var dir := Directory.new()
+	dir.open(path)
+	dir.list_dir_begin(true)
 	
-	var snd_dir = Directory.new()
-	snd_dir.open(sound_dir)
-	snd_dir.list_dir_begin(true)
-	
-	var sound = snd_dir.get_next()
-	while sound != "":
-		if not sound.ends_with(".import") and sound.ends_with(".wav"):
-			if type == 0:
-				_footstep_sounds.append(load(sound_dir + "/" + sound))
-			elif type == 1:
-				if "in" in sound:
-					_clamber_sounds["in"].append(load(sound_dir + "/" + sound))
-				elif "out" in sound:
-					_clamber_sounds["out"].append(load(sound_dir + "/" + sound))
-			elif type == 2:
-				_landing_sounds.append(load(sound_dir + "/" + sound))
-		sound = snd_dir.get_next()
+	var array := []
+
+	var snd = dir.get_next()
+	while snd != "":
+		if snd.ends_with(".wav"):
+			array.append(load(path + "/" + snd))
+		snd = dir.get_next()
+	return array
 
 
 func play_footstep_sound():

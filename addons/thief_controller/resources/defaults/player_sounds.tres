@@ -1,0 +1,10 @@
+[gd_resource type="Resource" load_steps=2 format=2]
+
+[ext_resource path="res://addons/thief_controller/scripts/resources/audio_player_sounds.gd" type="Script" id=1]
+
+[resource]
+script = ExtResource( 1 )
+footstep_sound_dirs = [ "res://addons/thief_controller/sfx/footsteps" ]
+landing_sound_dirs = [ "res://addons/thief_controller/sfx/landing" ]
+breathe_in_sound_dirs = [ "res://addons/thief_controller/sfx/breathe/in" ]
+breathe_out_sound_dirs = [ "res://addons/thief_controller/sfx/breathe/out" ]

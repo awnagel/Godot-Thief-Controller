@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=2]
+
+[ext_resource path="res://addons/thief_controller/scripts/resources/player_settings.gd" type="Script" id=1]
+
+[resource]
+script = ExtResource( 1 )
+head_bob_enabled = true
+footstep_audio_enabled = true
+clambering_enabled = true
+crouching_enabled = true
+leaning_enabled = true
+sound_emission_enabled = true
+dragging_enabled = true
+noclip_enabled = true
